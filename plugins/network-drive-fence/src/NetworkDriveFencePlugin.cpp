@@ -9,7 +9,7 @@ PluginManifest NetworkDriveFencePlugin::GetManifest() const
     PluginManifest m;
     m.id           = L"community.network_drive_fence";
     m.displayName  = L"Network Drive Fence";
-    m.version      = L"1.0.0";
+    m.version      = L"1.2.0";
     m.description  = L"Fence content provider for UNC paths and mapped network drives.";
     m.capabilities = {L"fence_content_provider", L"settings_pages"};
     return m;
@@ -21,10 +21,10 @@ bool NetworkDriveFencePlugin::Initialize(const PluginContext& context)
     if (context.fenceExtensionRegistry)
     {
         FenceContentProviderDescriptor desc;
-        desc.id          = L"community.network_drive_fence";
-        desc.providerId  = L"network_drive";
-        desc.displayName = L"Network Drive";
-        desc.isDefault   = false;
+        desc.providerId    = L"community.network_drive_fence";
+        desc.contentType   = L"network_drive";
+        desc.displayName   = L"Network Drive";
+        desc.isCoreDefault = false;
         context.fenceExtensionRegistry->RegisterContentProvider(desc);
     }
 
@@ -64,7 +64,146 @@ bool NetworkDriveFencePlugin::Initialize(const PluginContext& context)
             30
         });
 
+        page.fields.push_back(SettingsFieldDescriptor{
+            L"net_fence.general.refresh_seconds",
+            L"Refresh interval (seconds)",
+            L"How often the plugin should re-check the network path status.",
+            SettingsFieldType::Int, L"30", {}, 40
+        });
+
+        page.fields.push_back(SettingsFieldDescriptor{
+            L"net_fence.general.show_connection_status",
+            L"Show connection badge",
+            L"Display a status indicator when the path is online, reconnecting, or offline.",
+            SettingsFieldType::Bool, L"true", {}, 50
+        });
+
+        page.fields.push_back(SettingsFieldDescriptor{
+            L"net_fence.general.prefer_drive_label",
+            L"Prefer mapped drive label",
+            L"Use the mapped drive letter label when one is available.",
+            SettingsFieldType::Bool, L"true", {}, 60
+        });
+
+        page.fields.push_back(SettingsFieldDescriptor{
+            L"net_fence.general.auto_open_on_reconnect",
+            L"Auto-open after reconnect",
+            L"Open the fence automatically when the network location becomes available again.",
+            SettingsFieldType::Bool, L"false", {}, 70
+        });
+
+        page.fields.push_back(SettingsFieldDescriptor{
+            L"net_fence.general.display_alias",
+            L"Display alias",
+            L"Optional friendly label shown instead of the raw UNC path.",
+            SettingsFieldType::String, L"", {}, 80
+        });
+
+        page.fields.push_back(SettingsFieldDescriptor{
+            L"net_fence.general.open_action",
+            L"Default open action",
+            L"Choose what happens when the user opens the fence title or header action.",
+            SettingsFieldType::Enum, L"browse_root",
+            {
+                {L"browse_root", L"Browse root path"},
+                {L"open_in_explorer", L"Open in Explorer"},
+                {L"show_status", L"Show status/details"},
+            },
+            90
+        });
+
         context.settingsRegistry->RegisterPage(std::move(page));
+
+        PluginSettingsPage behaviorPage;
+        behaviorPage.pluginId = L"community.network_drive_fence";
+        behaviorPage.pageId   = L"net_fence.behavior";
+        behaviorPage.title    = L"Availability";
+        behaviorPage.order    = 20;
+
+        behaviorPage.fields.push_back(SettingsFieldDescriptor{
+            L"net_fence.behavior.offline_cache_mode",
+            L"Offline cache mode",
+            L"Choose how aggressively the provider should rely on cached metadata when offline.",
+            SettingsFieldType::Enum, L"metadata_only",
+            {
+                {L"off", L"Do not cache"},
+                {L"metadata_only", L"Cache metadata only"},
+                {L"metadata_and_icons", L"Cache metadata and icons"},
+            },
+            10
+        });
+
+        behaviorPage.fields.push_back(SettingsFieldDescriptor{
+            L"net_fence.behavior.warn_on_slow_share",
+            L"Warn on slow share",
+            L"Show a warning when the network path responds slowly.",
+            SettingsFieldType::Bool, L"true", {}, 20
+        });
+
+        behaviorPage.fields.push_back(SettingsFieldDescriptor{
+            L"net_fence.behavior.retry_count",
+            L"Reconnect retries",
+            L"Maximum number of reconnect attempts before marking the fence offline.",
+            SettingsFieldType::Int, L"3", {}, 30
+        });
+
+        behaviorPage.fields.push_back(SettingsFieldDescriptor{
+            L"net_fence.behavior.connect_timeout_seconds",
+            L"Connection timeout (seconds)",
+            L"Maximum time to wait for a network-path health check before treating it as unavailable.",
+            SettingsFieldType::Int, L"10", {}, 40
+        });
+
+        behaviorPage.fields.push_back(SettingsFieldDescriptor{
+            L"net_fence.behavior.show_last_seen_time",
+            L"Show last-seen timestamp",
+            L"Show when the provider last successfully reached the network location.",
+            SettingsFieldType::Bool, L"true", {}, 50
+        });
+
+        behaviorPage.fields.push_back(SettingsFieldDescriptor{
+            L"net_fence.behavior.background_refresh_on_metered",
+            L"Refresh on metered networks",
+            L"Allow background refresh checks even when Windows marks the connection as metered.",
+            SettingsFieldType::Bool, L"false", {}, 60
+        });
+
+        context.settingsRegistry->RegisterPage(std::move(behaviorPage));
+
+        PluginSettingsPage accessPage;
+        accessPage.pluginId = L"community.network_drive_fence";
+        accessPage.pageId   = L"net_fence.access";
+        accessPage.title    = L"Access";
+        accessPage.order    = 30;
+
+        accessPage.fields.push_back(SettingsFieldDescriptor{
+            L"net_fence.access.auth_mode",
+            L"Authentication mode",
+            L"Choose how the host should handle credentials for the network location.",
+            SettingsFieldType::Enum, L"windows_session",
+            {
+                {L"windows_session", L"Use current Windows session"},
+                {L"prompt", L"Prompt when needed"},
+                {L"saved_profile", L"Use saved credential profile"},
+            },
+            10
+        });
+
+        accessPage.fields.push_back(SettingsFieldDescriptor{
+            L"net_fence.access.remember_successful_credentials",
+            L"Remember successful credentials",
+            L"Allow the host to remember a successful credential choice for later reconnects.",
+            SettingsFieldType::Bool, L"true", {}, 20
+        });
+
+        accessPage.fields.push_back(SettingsFieldDescriptor{
+            L"net_fence.access.read_only_preference",
+            L"Prefer read-only access",
+            L"Prefer a read-only browsing flow when the host supports multiple access modes.",
+            SettingsFieldType::Bool, L"false", {}, 30
+        });
+
+        context.settingsRegistry->RegisterPage(std::move(accessPage));
     }
 
     return true;
