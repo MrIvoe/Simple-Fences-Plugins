@@ -3,6 +3,7 @@
 #include "extensions/MenuContributionRegistry.h"
 #include "extensions/PluginSettingsRegistry.h"
 #include "extensions/SettingsSchema.h"
+#include "../../shared/PluginUiPatterns.h"
 
 #include <codecvt>
 #include <ctime>
@@ -99,7 +100,7 @@ PluginManifest RulesEnginePlugin::GetManifest() const
     PluginManifest m;
     m.id = L"community.rules_engine";
     m.displayName = L"Rules Engine";
-    m.version = L"1.0.0";
+    m.version = L"1.1.1";
     m.description = L"Routes and classifies items using ordered matching rules.";
     m.minHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
     m.maxHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
@@ -141,11 +142,7 @@ void RulesEnginePlugin::RegisterSettings() const
 
     page.fields.push_back(SettingsFieldDescriptor{L"plugin.enabled", L"Enable plugin", L"Master toggle for Rules Engine behavior.", SettingsFieldType::Bool, L"true", {}, 1});
     page.fields.push_back(SettingsFieldDescriptor{L"plugin.log_actions", L"Log actions", L"Write rule evaluation actions to diagnostics.", SettingsFieldType::Bool, L"true", {}, 2});
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.show_notifications", L"Show notifications", L"Show user-facing notifications for rules events when supported.", SettingsFieldType::Bool, L"false", {}, 3});
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.safe_mode", L"Safe mode", L"Apply conservative non-destructive rule behavior by default.", SettingsFieldType::Bool, L"true", {}, 4});
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.default_mode", L"Default mode", L"Default rules profile mode.", SettingsFieldType::Enum, L"balanced", {{L"balanced", L"Balanced"}, {L"strict", L"Strict"}, {L"relaxed", L"Relaxed"}}, 5});
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.config_source", L"Config source", L"Configuration source identifier for this plugin.", SettingsFieldType::String, L"rules.sample.json", {}, 6});
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.refresh_interval_seconds", L"Refresh interval (s)", L"Preferred interval for periodic rules processing.", SettingsFieldType::Int, L"60", {}, 7});
+    PluginUiPatterns::AppendBaselineSettingsFields(page.fields, 1, 60, false);
 
     page.fields.push_back(SettingsFieldDescriptor{L"rules.enabled", L"Enable rules", L"Master toggle for rules evaluation.", SettingsFieldType::Bool, L"true", {}, 10});
     page.fields.push_back(SettingsFieldDescriptor{L"rules.eval_mode", L"Evaluation mode", L"How rules are evaluated when multiple match.", SettingsFieldType::Enum, L"first_match", {{L"first_match", L"First match"}, {L"all_matches", L"All matches"}, {L"first_terminal_match", L"First terminal match"}}, 20});
@@ -416,3 +413,5 @@ void RulesEnginePlugin::LogWarn(const std::wstring& message) const
         m_context.diagnostics->Warn(L"[RulesEngine] " + message);
     }
 }
+
+

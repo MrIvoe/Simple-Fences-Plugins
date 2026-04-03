@@ -4,6 +4,7 @@
 #include "extensions/MenuContributionRegistry.h"
 #include "extensions/PluginSettingsRegistry.h"
 #include "extensions/SettingsSchema.h"
+#include "../../shared/PluginUiPatterns.h"
 
 #include <algorithm>
 #include <chrono>
@@ -17,7 +18,7 @@ PluginManifest FenceOrganizerPlugin::GetManifest() const
     PluginManifest m;
     m.id = L"community.fence_organizer";
     m.displayName = L"Fence Organizer";
-    m.version = L"1.1.0";
+    m.version = L"1.2.1";
     m.description = L"Sorting and cleanup toolkit for fence contents using context-aware commands.";
     m.minHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
     m.maxHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
@@ -59,11 +60,7 @@ void FenceOrganizerPlugin::RegisterSettings() const
 
     page.fields.push_back(SettingsFieldDescriptor{L"plugin.enabled", L"Enable plugin", L"Master toggle for Fence Organizer behavior.", SettingsFieldType::Bool, L"true", {}, 1});
     page.fields.push_back(SettingsFieldDescriptor{L"plugin.log_actions", L"Log actions", L"Write organizer operations to diagnostics.", SettingsFieldType::Bool, L"true", {}, 2});
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.show_notifications", L"Show notifications", L"Show user-facing notifications for organizer actions when supported.", SettingsFieldType::Bool, L"false", {}, 3});
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.safe_mode", L"Safe mode", L"Use safer non-destructive defaults for organizer actions.", SettingsFieldType::Bool, L"true", {}, 4});
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.default_mode", L"Default mode", L"Default organizer mode profile.", SettingsFieldType::Enum, L"balanced", {{L"balanced", L"Balanced"}, {L"aggressive", L"Aggressive"}, {L"conservative", L"Conservative"}}, 5});
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.config_source", L"Config source", L"Configuration source identifier for this plugin.", SettingsFieldType::String, L"local", {}, 6});
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.refresh_interval_seconds", L"Refresh interval (s)", L"Preferred refresh interval for organizer follow-up updates.", SettingsFieldType::Int, L"120", {}, 7});
+    PluginUiPatterns::AppendBaselineSettingsFields(page.fields, 1, 120, false);
 
     page.fields.push_back(SettingsFieldDescriptor{
         L"organizer.actions.folder_prefix",
@@ -644,3 +641,5 @@ void FenceOrganizerPlugin::HandleMoveLarge(const CommandContext& command) const
         LogWarn(L"Move large files failed due to filesystem exception.");
     }
 }
+
+

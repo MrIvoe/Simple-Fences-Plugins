@@ -1,7 +1,7 @@
 {
   "id": "community.visual_modes",
   "displayName": "Visual Modes",
-  "version": "1.1.0",
+  "version": "1.1.5",
   "description": "Applies global or per-fence visual behavior presets with command routing.",
   "author": "SimpleFences Community",
   "minHostVersion": "0.0.012",

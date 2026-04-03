@@ -1,7 +1,7 @@
 {
   "id": "community.widgets_plus",
   "displayName": "Widgets Plus",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Provides embeddable utility widgets with bounded refresh and persisted state.",
   "author": "SimpleFences Community",
   "minHostVersion": "0.0.012",

@@ -1,7 +1,7 @@
 {
   "id": "community.context_actions",
   "displayName": "Context Actions",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Payload-aware right-click actions for desktop, fence, and item workflows.",
   "author": "SimpleFences Community",
   "minHostVersion": "0.0.012",

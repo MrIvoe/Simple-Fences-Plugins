@@ -3,6 +3,7 @@
 #include "extensions/PluginContracts.h"
 
 #include <chrono>
+#include <unordered_map>
 
 class WidgetsPlusPlugin final : public IPlugin
 {
@@ -14,7 +15,7 @@ public:
 private:
     PluginContext m_context{};
     mutable bool m_paused = false;
-    mutable std::chrono::steady_clock::time_point m_lastRefreshAt{};
+    mutable std::unordered_map<std::wstring, std::chrono::steady_clock::time_point> m_lastRefreshAtByFence;
 
     void RegisterSettings() const;
     void RegisterMenus() const;

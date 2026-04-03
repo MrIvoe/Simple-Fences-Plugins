@@ -3,6 +3,7 @@
 #include "extensions/MenuContributionRegistry.h"
 #include "extensions/PluginSettingsRegistry.h"
 #include "extensions/SettingsSchema.h"
+#include "../../shared/PluginUiPatterns.h"
 
 #include <sstream>
 
@@ -11,7 +12,7 @@ PluginManifest ContextActionsPlugin::GetManifest() const
     PluginManifest m;
     m.id = L"community.context_actions";
     m.displayName = L"Context Actions";
-    m.version = L"1.2.0";
+    m.version = L"1.2.1";
     m.description = L"Context-aware right-click actions for desktop, fence, and item workflows.";
     m.minHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
     m.maxHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
@@ -56,8 +57,7 @@ void ContextActionsPlugin::RegisterSettings() const
     page.title = L"Context Actions";
     page.order = 20;
 
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.show_notifications", L"Show notifications", L"Emit user-facing notification events to diagnostics.", SettingsFieldType::Bool, L"false", {}, 1});
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.refresh_interval_seconds", L"Refresh interval (s)", L"Minimum interval between refresh-provider command refreshes.", SettingsFieldType::Int, L"60", {}, 2});
+    PluginUiPatterns::AppendBaselineSettingsFields(page.fields, 1, 60, false);
     page.fields.push_back(SettingsFieldDescriptor{L"context.enabled", L"Enable context actions", L"Master toggle for plugin-contributed context actions.", SettingsFieldType::Bool, L"true", {}, 10});
     page.fields.push_back(SettingsFieldDescriptor{L"context.show_advanced", L"Show advanced commands", L"Expose advanced context actions.", SettingsFieldType::Bool, L"false", {}, 20});
     page.fields.push_back(SettingsFieldDescriptor{L"context.compact_mode", L"Compact mode", L"Prefer compact layout for plugin context actions.", SettingsFieldType::Bool, L"true", {}, 30});
@@ -353,3 +353,5 @@ void ContextActionsPlugin::LogInfo(const std::wstring& message) const
         m_context.diagnostics->Info(L"[ContextActions] " + message);
     }
 }
+
+

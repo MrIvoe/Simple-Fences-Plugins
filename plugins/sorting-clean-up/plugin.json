@@ -1,7 +1,7 @@
 {
   "id": "community.fence_sort_cleanup",
   "displayName": "Fence Sort and Clean Up",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Sorts and arranges fence items with optional automation and cleanup tools.",
   "author": "SimpleFences Community",
   "minHostVersion": "0.0.012",

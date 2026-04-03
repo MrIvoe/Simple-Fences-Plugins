@@ -3,13 +3,14 @@
 #include "extensions/FenceExtensionRegistry.h"
 #include "extensions/PluginSettingsRegistry.h"
 #include "extensions/SettingsSchema.h"
+#include "../../shared/PluginUiPatterns.h"
 
 PluginManifest NetworkDriveFencePlugin::GetManifest() const
 {
     PluginManifest m;
     m.id           = L"community.network_drive_fence";
     m.displayName  = L"Network Drive Fence";
-    m.version      = L"1.2.0";
+    m.version = L"1.2.1";
     m.description  = L"Fence content provider for UNC paths and mapped network drives.";
     m.capabilities = {L"fence_content_provider", L"settings_pages"};
     return m;
@@ -39,8 +40,7 @@ bool NetworkDriveFencePlugin::Initialize(const PluginContext& context)
         page.title    = L"Network Drive";
         page.order    = 10;
 
-        page.fields.push_back(SettingsFieldDescriptor{L"plugin.show_notifications", L"Show notifications", L"Emit user-facing notification events to diagnostics.", SettingsFieldType::Bool, L"false", {}, 1});
-        page.fields.push_back(SettingsFieldDescriptor{L"plugin.refresh_interval_seconds", L"Refresh interval (s)", L"Minimum interval between network-drive sync refresh operations.", SettingsFieldType::Int, L"60", {}, 2});
+        PluginUiPatterns::AppendBaselineSettingsFields(page.fields, 1, 60, false);
 
         page.fields.push_back(SettingsFieldDescriptor{
             L"net_fence.general.default_path",
@@ -289,3 +289,5 @@ void NetworkDriveFencePlugin::RefreshNetworkFencesWithThrottle() const
         }
     }
 }
+
+

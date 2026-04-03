@@ -4,6 +4,7 @@
 #include "extensions/MenuContributionRegistry.h"
 #include "extensions/PluginSettingsRegistry.h"
 #include "extensions/SettingsSchema.h"
+#include "../../shared/PluginUiPatterns.h"
 
 #include <chrono>
 #include <filesystem>
@@ -25,7 +26,7 @@ PluginManifest ExternalProviderPlugin::GetManifest() const
     PluginManifest m;
     m.id = L"community.external_provider";
     m.displayName = L"External Provider Fences";
-    m.version = L"1.0.0";
+    m.version = L"1.0.1";
     m.description = L"Shows provider-backed virtual item lists from external and generated sources.";
     m.minHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
     m.maxHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
@@ -85,8 +86,7 @@ void ExternalProviderPlugin::RegisterSettings() const
     page.title = L"External Provider";
     page.order = 80;
 
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.show_notifications", L"Show notifications", L"Emit user-facing notification events to diagnostics.", SettingsFieldType::Bool, L"false", {}, 1});
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.refresh_interval_seconds", L"Refresh interval (s)", L"Minimum interval between provider refresh operations.", SettingsFieldType::Int, L"60", {}, 2});
+    PluginUiPatterns::AppendBaselineSettingsFields(page.fields, 1, 60, false);
     page.fields.push_back(SettingsFieldDescriptor{L"provider.enabled", L"Enable external providers", L"Master toggle for external provider fences.", SettingsFieldType::Bool, L"true", {}, 10});
     page.fields.push_back(SettingsFieldDescriptor{L"provider.refresh_mode", L"Refresh mode", L"Choose manual, interval, startup, or hybrid refresh policy.", SettingsFieldType::Enum, L"hybrid", {{L"manual", L"Manual"}, {L"interval", L"Interval"}, {L"on_startup", L"On startup"}, {L"hybrid", L"Hybrid"}}, 20});
     page.fields.push_back(SettingsFieldDescriptor{L"provider.refresh_interval_seconds", L"Refresh interval (s)", L"Interval for polling-based refresh.", SettingsFieldType::Int, L"300", {}, 30});
@@ -361,13 +361,14 @@ void ExternalProviderPlugin::RefreshFenceWithThrottle(const std::wstring& fenceI
     }
 
     const auto now = std::chrono::steady_clock::now();
-    if (m_lastRefreshAt.time_since_epoch().count() != 0 && (now - m_lastRefreshAt) < std::chrono::seconds(seconds))
+    const auto it = m_lastRefreshAtByFence.find(fenceId);
+    if (it != m_lastRefreshAtByFence.end() && (now - it->second) < std::chrono::seconds(seconds))
     {
         LogInfo(L"Provider refresh throttled by plugin.refresh_interval_seconds");
         return;
     }
 
-    m_lastRefreshAt = now;
+    m_lastRefreshAtByFence[fenceId] = now;
     m_context.appCommands->RefreshFence(fenceId);
 }
 
@@ -418,3 +419,5 @@ void ExternalProviderPlugin::LogWarn(const std::wstring& message) const
         m_context.diagnostics->Warn(L"[ExternalProvider] " + message);
     }
 }
+
+

@@ -2,13 +2,14 @@
 
 #include "extensions/PluginSettingsRegistry.h"
 #include "extensions/SettingsSchema.h"
+#include "../../shared/PluginUiPatterns.h"
 
 PluginManifest ClockWidgetPlugin::GetManifest() const
 {
     PluginManifest m;
     m.id           = L"community.clock_widget";
     m.displayName  = L"Clock Widget";
-    m.version      = L"1.2.0";
+    m.version = L"1.2.1";
     m.description  = L"Configurable digital, analogue, and dashboard clock widget for a fence panel.";
     m.capabilities = {L"widgets", L"settings_pages"};
     return m;
@@ -30,8 +31,7 @@ bool ClockWidgetPlugin::Initialize(const PluginContext& context)
     page.title    = L"Clock Display";
     page.order    = 10;
 
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.show_notifications", L"Show notifications", L"Emit user-facing notification events to diagnostics.", SettingsFieldType::Bool, L"false", {}, 1});
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.refresh_interval_seconds", L"Refresh interval (s)", L"Minimum interval between widget panel refresh operations.", SettingsFieldType::Int, L"60", {}, 2});
+    PluginUiPatterns::AppendBaselineSettingsFields(page.fields, 1, 60, false);
 
     page.fields.push_back(SettingsFieldDescriptor{
         L"clock.display.style",
@@ -257,3 +257,5 @@ void ClockWidgetPlugin::RefreshWidgetPanelsWithThrottle() const
         }
     }
 }
+
+

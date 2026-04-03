@@ -3,6 +3,7 @@
 #include "extensions/MenuContributionRegistry.h"
 #include "extensions/PluginSettingsRegistry.h"
 #include "extensions/SettingsSchema.h"
+#include "../../shared/PluginUiPatterns.h"
 
 #include <algorithm>
 #include <chrono>
@@ -17,7 +18,7 @@ PluginManifest SortingCleanupPlugin::GetManifest() const
     PluginManifest m;
     m.id = L"community.fence_sort_cleanup";
     m.displayName = L"Fence Sort and Clean Up";
-    m.version = L"1.0.0";
+    m.version = L"1.1.1";
     m.description = L"Sorts and arranges fence items with optional automation and cleanup tools.";
     m.minHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
     m.maxHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
@@ -60,11 +61,7 @@ void SortingCleanupPlugin::RegisterSettings() const
 
     page.fields.push_back(SettingsFieldDescriptor{L"plugin.enabled", L"Enable plugin", L"Master toggle for Sort and Clean Up behavior.", SettingsFieldType::Bool, L"true", {}, 1});
     page.fields.push_back(SettingsFieldDescriptor{L"plugin.log_actions", L"Log actions", L"Write sort and cleanup actions to diagnostics.", SettingsFieldType::Bool, L"true", {}, 2});
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.show_notifications", L"Show notifications", L"Show user-facing notifications for sort actions when supported.", SettingsFieldType::Bool, L"false", {}, 3});
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.safe_mode", L"Safe mode", L"Use safer and less aggressive sort behavior by default.", SettingsFieldType::Bool, L"true", {}, 4});
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.default_mode", L"Default mode", L"Default sorting behavior profile.", SettingsFieldType::Enum, L"balanced", {{L"balanced", L"Balanced"}, {L"aggressive", L"Aggressive"}, {L"manual", L"Manual"}}, 5});
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.config_source", L"Config source", L"Configuration source identifier for this plugin.", SettingsFieldType::String, L"local", {}, 6});
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.refresh_interval_seconds", L"Refresh interval (s)", L"Preferred interval for sort-related update checks.", SettingsFieldType::Int, L"90", {}, 7});
+    PluginUiPatterns::AppendBaselineSettingsFields(page.fields, 1, 90, false);
 
     page.fields.push_back(SettingsFieldDescriptor{L"sort.mode.default", L"Default sort mode", L"Default mode for sort commands and autosort.", SettingsFieldType::Enum, L"name", {{L"name", L"Name"}, {L"type", L"Type"}, {L"extension", L"Extension"}, {L"size", L"Size"}, {L"modified", L"Modified"}, {L"created", L"Created"}, {L"manual", L"Manual"}}, 10});
     page.fields.push_back(SettingsFieldDescriptor{L"sort.mode.direction", L"Sort direction", L"Ascending or descending sort order.", SettingsFieldType::Enum, L"asc", {{L"asc", L"Ascending"}, {L"desc", L"Descending"}}, 20});
@@ -568,3 +565,5 @@ void SortingCleanupPlugin::ApplySortPlan(const FenceMetadata& fence, const std::
     RefreshFenceWithThrottle(fence.id);
     Notify(L"Sort operation completed.");
 }
+
+

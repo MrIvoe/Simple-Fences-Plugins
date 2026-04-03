@@ -1,7 +1,7 @@
 {
   "id": "community.template_plugin",
   "displayName": "Template Plugin",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Starter template for a SimpleFences community plugin.",
   "author": "Community",
   "minHostVersion": "0.0.009",

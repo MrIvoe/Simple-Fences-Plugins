@@ -3,13 +3,14 @@
 #include "extensions/FenceExtensionRegistry.h"
 #include "extensions/PluginSettingsRegistry.h"
 #include "extensions/SettingsSchema.h"
+#include "../../shared/PluginUiPatterns.h"
 
 PluginManifest PowerShellFencePlugin::GetManifest() const
 {
     PluginManifest m;
     m.id               = L"community.powershell_fence";
     m.displayName      = L"PowerShell Workspace Fence";
-    m.version          = L"0.2.0";
+    m.version = L"0.2.1";
     m.description      = L"Prototype PowerShell workspace fence with persisted startup, admin, view, and safety controls.";
     m.enabledByDefault = false;
     m.capabilities     = {L"fence_content_provider", L"settings_pages"};
@@ -41,8 +42,7 @@ bool PowerShellFencePlugin::Initialize(const PluginContext& context)
     startupPage.title    = L"Startup";
     startupPage.order    = 10;
 
-    startupPage.fields.push_back(SettingsFieldDescriptor{L"plugin.show_notifications", L"Show notifications", L"Emit user-facing notification events to diagnostics.", SettingsFieldType::Bool, L"false", {}, 1});
-    startupPage.fields.push_back(SettingsFieldDescriptor{L"plugin.refresh_interval_seconds", L"Refresh interval (s)", L"Minimum interval between workspace fence refresh operations.", SettingsFieldType::Int, L"60", {}, 2});
+    PluginUiPatterns::AppendBaselineSettingsFields(startupPage.fields, 1, 60, false);
 
     startupPage.fields.push_back(SettingsFieldDescriptor{
         L"ps_fence.startup.mode",

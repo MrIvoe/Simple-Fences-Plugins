@@ -1,7 +1,7 @@
 {
   "id": "community.rules_engine",
   "displayName": "Rules Engine",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Routes and classifies items using ordered matching rules.",
   "author": "SimpleFences Community",
   "minHostVersion": "0.0.012",

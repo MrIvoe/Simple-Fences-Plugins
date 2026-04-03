@@ -1,7 +1,7 @@
 {
   "id": "community.productivity_actions",
   "displayName": "Productivity Actions",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Adds practical multi-step commands for daily fence workflows.",
   "author": "SimpleFences Community",
   "minHostVersion": "0.0.012",

@@ -15,8 +15,15 @@ Copy this folder into `plugins/<your-plugin-name>/` and then rename the identifi
 
 - a valid manifest
 - a minimal plugin class
-- one settings page with a boolean and enum field
+- one settings page with baseline plugin UI fields plus example boolean and enum fields
 - naming and structure that match the rest of the hub
+
+## Shared UI baseline
+
+The template uses `PluginUiPatterns::AppendBaselineSettingsFields(...)` so new plugins start with consistent host-rendered settings UX:
+
+- `plugin.show_notifications`
+- `plugin.refresh_interval_seconds`
 
 ## Recommended next step
 

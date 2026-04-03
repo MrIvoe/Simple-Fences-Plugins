@@ -22,7 +22,7 @@ private:
 
     PluginContext m_context{};
     mutable std::unordered_map<std::wstring, CacheEntry> m_cache;
-    mutable std::chrono::steady_clock::time_point m_lastRefreshAt{};
+    mutable std::unordered_map<std::wstring, std::chrono::steady_clock::time_point> m_lastRefreshAtByFence;
 
     void RegisterSettings() const;
     void RegisterMenus() const;

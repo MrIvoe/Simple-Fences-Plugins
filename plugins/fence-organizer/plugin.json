@@ -1,7 +1,7 @@
 {
   "id": "community.fence_organizer",
   "displayName": "Fence Organizer",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Adds context-aware sorting and cleanup commands that move and organize real fence files.",
   "author": "SimpleFences Community",
   "minHostVersion": "0.0.012",

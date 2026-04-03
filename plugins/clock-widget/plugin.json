@@ -1,10 +1,13 @@
 {
   "id": "community.clock_widget",
   "displayName": "Clock Widget",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "A configurable clock widget with digital, analogue, and dashboard-style display settings.",
   "author": "Community",
   "minHostVersion": "0.0.009",
-  "capabilities": ["widgets", "settings_pages"],
+  "capabilities": [
+    "widgets",
+    "settings_pages"
+  ],
   "repository": "https://github.com/MrIvoe/Simple-Fences-Plugins"
 }

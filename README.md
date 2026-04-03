@@ -44,6 +44,19 @@ High-value plugin directions include:
 
 All fields registered through `settings_pages` are persisted automatically to `%LOCALAPPDATA%\SimpleFences\settings.json`.
 
+## Shared plugin UI pattern
+
+Plugin settings UI in this repository is host-rendered through `SettingsWindow` in the main app. To keep plugin pages visually cohesive and maintainable, plugins now use a shared helper:
+
+- `plugins/shared/PluginUiPatterns.h`
+
+Current baseline convention:
+
+- `plugin.show_notifications`
+- `plugin.refresh_interval_seconds`
+
+Use `PluginUiPatterns::AppendBaselineSettingsFields(...)` at the top of each settings page field list so labels, ordering, and descriptions stay consistent across plugins.
+
 ## Included plugins
 
 | Plugin | Capabilities | Status | What it adds |

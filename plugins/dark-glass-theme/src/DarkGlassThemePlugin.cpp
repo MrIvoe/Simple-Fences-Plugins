@@ -1,17 +1,19 @@
 #include "DarkGlassThemePlugin.h"
 
+#include "extensions/MenuContributionRegistry.h"
 #include "extensions/PluginSettingsRegistry.h"
 #include "extensions/SettingsSchema.h"
+#include "../../shared/PluginUiPatterns.h"
 
 PluginManifest DarkGlassThemePlugin::GetManifest() const
 {
     PluginManifest m;
     m.id             = L"community.dark_glass_theme";
     m.displayName    = L"Dark Glass Theme";
-    m.version        = L"1.2.0";
+    m.version = L"1.2.3";
     m.description    = L"Translucent dark theme for fence windows with a frosted-glass look.";
     m.enabledByDefault = true;
-    m.capabilities   = {L"appearance", L"settings_pages"};
+    m.capabilities   = {L"appearance", L"settings_pages", L"commands", L"tray_contributions"};
     return m;
 }
 
@@ -31,8 +33,7 @@ bool DarkGlassThemePlugin::Initialize(const PluginContext& context)
     page.title    = L"Glass Style";
     page.order    = 10;
 
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.show_notifications", L"Show notifications", L"Emit user-facing notification events to diagnostics.", SettingsFieldType::Bool, L"false", {}, 1});
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.refresh_interval_seconds", L"Refresh interval (s)", L"Minimum interval between theme reapply refresh operations.", SettingsFieldType::Int, L"60", {}, 2});
+    PluginUiPatterns::AppendBaselineSettingsFields(page.fields, 1, 60, false);
 
     page.fields.push_back(SettingsFieldDescriptor{
         L"dark_glass.style.enabled",
@@ -189,6 +190,9 @@ bool DarkGlassThemePlugin::Initialize(const PluginContext& context)
 
     context.settingsRegistry->RegisterPage(std::move(behaviorPage));
 
+    RegisterMenus();
+    RegisterCommands();
+
     // Read persisted values and apply the theme
     const bool enabled = (context.settingsRegistry->GetValue(
         L"dark_glass.style.enabled", L"true") == L"true");
@@ -202,6 +206,90 @@ bool DarkGlassThemePlugin::Initialize(const PluginContext& context)
     }
 
     return true;
+}
+
+void DarkGlassThemePlugin::RegisterMenus() const
+{
+    if (!m_context.menuRegistry)
+    {
+        return;
+    }
+
+    m_context.menuRegistry->Register(MenuContribution{
+        MenuSurface::Tray,
+        L"Reapply Dark Glass Theme",
+        L"dark_glass.reapply_theme",
+        245,
+        false});
+
+    m_context.menuRegistry->Register(MenuContribution{
+        MenuSurface::Tray,
+        L"Toggle Dark Glass Preview",
+        L"dark_glass.preview_toggle",
+        246,
+        false});
+}
+
+void DarkGlassThemePlugin::RegisterCommands() const
+{
+    if (!m_context.commandDispatcher)
+    {
+        return;
+    }
+
+    m_context.commandDispatcher->RegisterCommand(
+        L"dark_glass.reapply_theme",
+        [this](const CommandContext& command)
+        {
+            HandleReapplyTheme(command);
+        });
+
+    m_context.commandDispatcher->RegisterCommand(
+        L"dark_glass.preview_toggle",
+        [this](const CommandContext& command)
+        {
+            HandlePreviewToggle(command);
+        });
+}
+
+void DarkGlassThemePlugin::HandleReapplyTheme(const CommandContext&) const
+{
+    if (!GetBool(L"dark_glass.style.enabled", true))
+    {
+        if (m_context.diagnostics)
+        {
+            m_context.diagnostics->Info(L"[DarkGlassTheme] Reapply skipped because dark_glass.style.enabled is false");
+        }
+        Notify(L"Dark Glass theme is disabled.");
+        return;
+    }
+
+    ApplyThemeToAllFences(true);
+    Notify(L"Dark Glass theme reapplied.");
+}
+
+void DarkGlassThemePlugin::HandlePreviewToggle(const CommandContext&) const
+{
+    if (!m_context.settingsRegistry)
+    {
+        return;
+    }
+
+    const bool currentlyEnabled = GetBool(L"dark_glass.style.enabled", true);
+    const bool nextEnabled = !currentlyEnabled;
+    m_context.settingsRegistry->SetValue(L"dark_glass.style.enabled", nextEnabled ? L"true" : L"false");
+
+    ApplyThemeToAllFences(true);
+
+    if (m_context.diagnostics)
+    {
+        m_context.diagnostics->Info(
+            nextEnabled
+                ? L"[DarkGlassTheme] Preview toggled on"
+                : L"[DarkGlassTheme] Preview toggled off");
+    }
+
+    Notify(nextEnabled ? L"Dark Glass preview enabled." : L"Dark Glass preview disabled.");
 }
 
 void DarkGlassThemePlugin::Shutdown()
@@ -249,6 +337,11 @@ void DarkGlassThemePlugin::Notify(const std::wstring& message) const
 
 void DarkGlassThemePlugin::RefreshAllFencesWithThrottle() const
 {
+    ApplyThemeToAllFences(false);
+}
+
+void DarkGlassThemePlugin::ApplyThemeToAllFences(bool bypassThrottle) const
+{
     if (!m_context.appCommands)
     {
         return;
@@ -261,7 +354,7 @@ void DarkGlassThemePlugin::RefreshAllFencesWithThrottle() const
     }
 
     const auto now = std::chrono::steady_clock::now();
-    if (m_lastApplyAt.time_since_epoch().count() != 0 && (now - m_lastApplyAt) < std::chrono::seconds(seconds))
+    if (!bypassThrottle && m_lastApplyAt.time_since_epoch().count() != 0 && (now - m_lastApplyAt) < std::chrono::seconds(seconds))
     {
         return;
     }
@@ -273,3 +366,5 @@ void DarkGlassThemePlugin::RefreshAllFencesWithThrottle() const
         m_context.appCommands->RefreshFence(id);
     }
 }
+
+

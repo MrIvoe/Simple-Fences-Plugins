@@ -3,15 +3,88 @@
 #include "extensions/MenuContributionRegistry.h"
 #include "extensions/PluginSettingsRegistry.h"
 #include "extensions/SettingsSchema.h"
+#include "../../shared/PluginUiPatterns.h"
 
 #include <array>
+#include <vector>
+
+namespace
+{
+    const std::vector<std::pair<std::wstring, std::wstring>>& Win32ThemeOptions()
+    {
+        static const std::vector<std::pair<std::wstring, std::wstring>> options = {
+            {L"amber_terminal", L"Amber Terminal"},
+            {L"arctic_glass", L"Arctic Glass"},
+            {L"aurora_light", L"Aurora Light"},
+            {L"brass_steampunk", L"Brass Steampunk"},
+            {L"copper_foundry", L"Copper Foundry"},
+            {L"emerald_ledger", L"Emerald Ledger"},
+            {L"forest_organic", L"Forest Organic"},
+            {L"graphite_office", L"Graphite Office"},
+            {L"harbor_blue", L"Harbor Blue"},
+            {L"ivory_bureau", L"Ivory Bureau"},
+            {L"mono_minimal", L"Mono Minimal"},
+            {L"neon_cyberpunk", L"Neon Cyberpunk"},
+            {L"nocturne_dark", L"Nocturne Dark"},
+            {L"nova_futuristic", L"Nova Futuristic"},
+            {L"olive_terminal", L"Olive Terminal"},
+            {L"pop_colorburst", L"Pop Colorburst"},
+            {L"rose_paper", L"Rose Paper"},
+            {L"storm_steel", L"Storm Steel"},
+            {L"sunset_retro", L"Sunset Retro"},
+            {L"tape_lo_fi", L"Tape Lo-Fi"},
+            {L"custom", L"Custom"},
+        };
+
+        return options;
+    }
+
+    bool IsLikelyDarkTheme(const std::wstring& themeKey)
+    {
+        static const std::array<std::wstring, 10> darkKeys = {
+            L"amber_terminal",
+            L"arctic_glass",
+            L"graphite_office",
+            L"neon_cyberpunk",
+            L"nocturne_dark",
+            L"olive_terminal",
+            L"storm_steel",
+            L"harbor_blue",
+            L"forest_organic",
+            L"nova_futuristic",
+        };
+
+        for (const auto& key : darkKeys)
+        {
+            if (themeKey == key)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    std::wstring ThemeDisplayNameFromKey(const std::wstring& themeKey)
+    {
+        for (const auto& option : Win32ThemeOptions())
+        {
+            if (option.first == themeKey)
+            {
+                return option.second;
+            }
+        }
+
+        return L"Graphite Office";
+    }
+}
 
 PluginManifest VisualModesPlugin::GetManifest() const
 {
     PluginManifest m;
     m.id = L"community.visual_modes";
     m.displayName = L"Visual Modes";
-    m.version = L"1.0.0";
+    m.version = L"1.1.5";
     m.description = L"Applies global or per-fence visual behavior presets.";
     m.minHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
     m.maxHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
@@ -53,36 +126,31 @@ void VisualModesPlugin::RegisterSettings() const
 
     page.fields.push_back(SettingsFieldDescriptor{L"plugin.enabled", L"Enable plugin", L"Master toggle for Visual Modes behavior.", SettingsFieldType::Bool, L"true", {}, 1});
     page.fields.push_back(SettingsFieldDescriptor{L"plugin.log_actions", L"Log actions", L"Write visual mode actions to diagnostics.", SettingsFieldType::Bool, L"true", {}, 2});
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.show_notifications", L"Show notifications", L"Show user-facing notifications for visual mode changes when supported.", SettingsFieldType::Bool, L"false", {}, 3});
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.safe_mode", L"Safe mode", L"Prefer conservative visual changes for compatibility.", SettingsFieldType::Bool, L"true", {}, 4});
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.default_mode", L"Default mode", L"Default visual behavior mode.", SettingsFieldType::Enum, L"balanced", {{L"balanced", L"Balanced"}, {L"showcase", L"Showcase"}, {L"minimal", L"Minimal"}}, 5});
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.config_source", L"Config source", L"Configuration source identifier for this plugin.", SettingsFieldType::String, L"local", {}, 6});
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.refresh_interval_seconds", L"Refresh interval (s)", L"Preferred interval for visual refresh tasks.", SettingsFieldType::Int, L"300", {}, 7});
+    page.fields.push_back(SettingsFieldDescriptor{L"plugin.safe_mode", L"Safe mode", L"When enabled, global preset apply is blocked to prevent broad visual changes.", SettingsFieldType::Bool, L"false", {}, 3});
+    page.fields.push_back(SettingsFieldDescriptor{L"plugin.default_mode", L"Default mode", L"Default visual behavior mode profile.", SettingsFieldType::Enum, L"balanced", {{L"balanced", L"Balanced"}, {L"showcase", L"Showcase"}, {L"minimal", L"Minimal"}}, 4});
+    page.fields.push_back(SettingsFieldDescriptor{L"plugin.config_source", L"Config source", L"Configuration source identifier for this plugin.", SettingsFieldType::String, L"local", {}, 5});
+    PluginUiPatterns::AppendBaselineSettingsFields(page.fields, 6, 300, false);
 
     page.fields.push_back(SettingsFieldDescriptor{
         L"theme.preset",
         L"Preset",
-        L"Choose the active visual preset.",
+        L"Choose the active theme from the Win32ThemeSystem catalog.",
         SettingsFieldType::Enum,
-        L"default",
-        {
-            {L"default", L"Default"},
-            {L"dark_glass", L"Dark Glass"},
-            {L"compact", L"Compact"},
-            {L"minimal", L"Minimal"},
-            {L"high_contrast", L"High Contrast"},
-            {L"presentation", L"Presentation"},
-            {L"custom", L"Custom"},
-        },
+        L"graphite_office",
+        Win32ThemeOptions(),
         10});
 
     page.fields.push_back(SettingsFieldDescriptor{L"theme.apply_global", L"Apply globally", L"Apply preset actions to all fences by default.", SettingsFieldType::Bool, L"true", {}, 20});
     page.fields.push_back(SettingsFieldDescriptor{L"theme.allow_per_fence_override", L"Allow per-fence override", L"Allow apply/reset commands to target one fence.", SettingsFieldType::Bool, L"true", {}, 30});
+    page.fields.push_back(SettingsFieldDescriptor{L"theme.source", L"Theme source", L"Theme catalog source used by this plugin.", SettingsFieldType::Enum, L"win32_theme_system", {{L"win32_theme_system", L"Win32ThemeSystem"}}, 35});
+    page.fields.push_back(SettingsFieldDescriptor{L"theme.win32.display_name", L"Win32 theme display name", L"Normalized Win32ThemeSystem display name for host-side theme bridge integration.", SettingsFieldType::String, L"Graphite Office", {}, 36});
+    page.fields.push_back(SettingsFieldDescriptor{L"theme.win32.catalog_version", L"Win32 theme catalog version", L"Catalog contract version emitted for host bridge consumers.", SettingsFieldType::String, L"2026.04", {}, 37});
     page.fields.push_back(SettingsFieldDescriptor{L"theme.colors.background", L"Background color", L"Custom preset background color (#RRGGBB).", SettingsFieldType::String, L"#1F2530", {}, 40});
     page.fields.push_back(SettingsFieldDescriptor{L"theme.colors.header", L"Header color", L"Custom preset header color (#RRGGBB).", SettingsFieldType::String, L"#223247", {}, 50});
     page.fields.push_back(SettingsFieldDescriptor{L"theme.colors.border", L"Border color", L"Custom preset border color (#RRGGBB).", SettingsFieldType::String, L"#3E4A5F", {}, 60});
     page.fields.push_back(SettingsFieldDescriptor{L"theme.colors.text", L"Text color", L"Custom preset text color (#RRGGBB).", SettingsFieldType::String, L"#E4ECF7", {}, 70});
-    page.fields.push_back(SettingsFieldDescriptor{L"theme.effects.transparency", L"Enable transparency", L"Enable transparent visual treatment when supported.", SettingsFieldType::Bool, L"true", {}, 80});
+    page.fields.push_back(SettingsFieldDescriptor{L"theme.effects.transparency", L"Enable transparency", L"Enable transparent visual treatment when supported.", SettingsFieldType::Bool, L"false", {}, 80});
+    page.fields.push_back(SettingsFieldDescriptor{L"theme.keep_title_bar_visible", L"Keep title bar visible", L"Prevent presets from combining rollup and transparency in a way that can fully hide the fence.", SettingsFieldType::Bool, L"true", {}, 85});
     page.fields.push_back(SettingsFieldDescriptor{L"theme.effects.opacity_percent", L"Opacity percent", L"Window opacity percent for custom and glass presets.", SettingsFieldType::Int, L"88", {}, 90});
     page.fields.push_back(SettingsFieldDescriptor{L"theme.effects.blur", L"Enable blur", L"Enable blur when host compositor supports it.", SettingsFieldType::Bool, L"true", {}, 100});
     page.fields.push_back(SettingsFieldDescriptor{L"theme.effects.corner_radius_px", L"Corner radius (px)", L"Corner radius used by supported presets.", SettingsFieldType::Int, L"8", {}, 110});
@@ -100,6 +168,7 @@ void VisualModesPlugin::RegisterMenus() const
     m_context.menuRegistry->Register(MenuContribution{MenuSurface::Tray, L"Switch Visual Preset", L"theme.switch", 210, false});
     m_context.menuRegistry->Register(MenuContribution{MenuSurface::Tray, L"Toggle Compact Mode", L"theme.compact_toggle", 220, false});
     m_context.menuRegistry->Register(MenuContribution{MenuSurface::Tray, L"Toggle Presentation Mode", L"theme.presentation_toggle", 230, false});
+    m_context.menuRegistry->Register(MenuContribution{MenuSurface::Tray, L"Sync Host Theme Bridge", L"theme.host_bridge_sync", 240, false});
 }
 
 void VisualModesPlugin::RegisterCommands() const
@@ -109,6 +178,12 @@ void VisualModesPlugin::RegisterCommands() const
     m_context.commandDispatcher->RegisterCommand(L"theme.presentation_toggle", [this](const CommandContext& command) { HandlePresentationToggle(command); });
     m_context.commandDispatcher->RegisterCommand(L"theme.apply_current_to_fence", [this](const CommandContext& command) { HandleApplyCurrentToFence(command); });
     m_context.commandDispatcher->RegisterCommand(L"theme.reset_fence", [this](const CommandContext& command) { HandleResetFence(command); });
+    m_context.commandDispatcher->RegisterCommand(L"theme.host_bridge_sync", [this](const CommandContext&) { SetPreset(GetSetting(L"theme.preset", L"graphite_office")); Notify(L"Host theme bridge synchronized."); });
+
+    // Compatibility aliases used by older/context-action routes.
+    m_context.commandDispatcher->RegisterCommand(L"appearance.mode.focus", [this](const CommandContext& command) { HandleApplyCurrentToFence(command); });
+    m_context.commandDispatcher->RegisterCommand(L"appearance.mode.cycle", [this](const CommandContext& command) { HandleThemeSwitch(command); });
+    m_context.commandDispatcher->RegisterCommand(L"appearance.mode.reset", [this](const CommandContext& command) { HandleResetFence(command); });
 }
 
 void VisualModesPlugin::HandleThemeSwitch(const CommandContext&) const
@@ -118,11 +193,13 @@ void VisualModesPlugin::HandleThemeSwitch(const CommandContext&) const
         return;
     }
 
-    static const std::array<std::wstring, 7> presets = {
-        L"default", L"dark_glass", L"compact", L"minimal", L"high_contrast", L"presentation", L"custom"
-    };
+    std::vector<std::wstring> presets;
+    for (const auto& option : Win32ThemeOptions())
+    {
+        presets.push_back(option.first);
+    }
 
-    const std::wstring current = GetSetting(L"theme.preset", L"default");
+    const std::wstring current = GetSetting(L"theme.preset", L"graphite_office");
     size_t index = 0;
     while (index < presets.size() && presets[index] != current)
     {
@@ -149,8 +226,8 @@ void VisualModesPlugin::HandleCompactToggle(const CommandContext& command) const
         return;
     }
 
-    const std::wstring current = GetSetting(L"theme.preset", L"default");
-    const std::wstring next = (current == L"compact") ? L"default" : L"compact";
+    const std::wstring current = GetSetting(L"theme.preset", L"graphite_office");
+    const std::wstring next = (current == L"mono_minimal") ? L"graphite_office" : L"mono_minimal";
     SetPreset(next);
 
     const std::wstring fenceId = ResolveTargetFenceId(command);
@@ -168,8 +245,8 @@ void VisualModesPlugin::HandlePresentationToggle(const CommandContext& command) 
         return;
     }
 
-    const std::wstring current = GetSetting(L"theme.preset", L"default");
-    const std::wstring next = (current == L"presentation") ? L"default" : L"presentation";
+    const std::wstring current = GetSetting(L"theme.preset", L"graphite_office");
+    const std::wstring next = (current == L"storm_steel") ? L"aurora_light" : L"storm_steel";
     SetPreset(next);
 
     const std::wstring fenceId = ResolveTargetFenceId(command);
@@ -198,7 +275,7 @@ void VisualModesPlugin::HandleApplyCurrentToFence(const CommandContext& command)
         return;
     }
 
-    ApplyPresetToFence(fenceId, GetSetting(L"theme.preset", L"default"), false);
+    ApplyPresetToFence(fenceId, GetSetting(L"theme.preset", L"graphite_office"), false);
 }
 
 void VisualModesPlugin::HandleResetFence(const CommandContext& command) const
@@ -219,7 +296,7 @@ void VisualModesPlugin::HandleResetFence(const CommandContext& command) const
         return;
     }
 
-    ApplyPresetToFence(fenceId, L"default", false);
+    ApplyPresetToFence(fenceId, L"graphite_office", false);
 }
 
 std::wstring VisualModesPlugin::GetSetting(const std::wstring& key, const std::wstring& fallback) const
@@ -299,6 +376,8 @@ void VisualModesPlugin::SetPreset(const std::wstring& preset) const
     }
 
     m_context.settingsRegistry->SetValue(L"theme.preset", preset);
+    m_context.settingsRegistry->SetValue(L"theme.win32.display_name", ThemeDisplayNameFromKey(preset));
+    m_context.settingsRegistry->SetValue(L"theme.source", L"win32_theme_system");
     LogInfo(L"Preset switched to " + preset);
 }
 
@@ -322,51 +401,19 @@ FencePresentationSettings VisualModesPlugin::BuildPresentationFromPreset(const s
 {
     FencePresentationSettings settings;
 
-    if (preset == L"compact")
+    if (preset == L"custom")
     {
-        settings.textOnlyMode = true;
-        settings.rollupWhenNotHovered = true;
-        settings.transparentWhenNotHovered = true;
+        settings.textOnlyMode = false;
+        settings.rollupWhenNotHovered = false;
+        settings.transparentWhenNotHovered = GetSettingBool(L"theme.effects.transparency", false);
         settings.labelsOnHover = true;
-        settings.iconSpacingPreset = L"compact";
+        settings.iconSpacingPreset = L"comfortable";
     }
-    else if (preset == L"presentation")
+    else if (IsLikelyDarkTheme(preset))
     {
         settings.textOnlyMode = false;
         settings.rollupWhenNotHovered = false;
         settings.transparentWhenNotHovered = false;
-        settings.labelsOnHover = false;
-        settings.iconSpacingPreset = L"spacious";
-    }
-    else if (preset == L"minimal")
-    {
-        settings.textOnlyMode = true;
-        settings.rollupWhenNotHovered = false;
-        settings.transparentWhenNotHovered = true;
-        settings.labelsOnHover = true;
-        settings.iconSpacingPreset = L"compact";
-    }
-    else if (preset == L"high_contrast")
-    {
-        settings.textOnlyMode = false;
-        settings.rollupWhenNotHovered = false;
-        settings.transparentWhenNotHovered = false;
-        settings.labelsOnHover = true;
-        settings.iconSpacingPreset = L"comfortable";
-    }
-    else if (preset == L"dark_glass")
-    {
-        settings.textOnlyMode = false;
-        settings.rollupWhenNotHovered = false;
-        settings.transparentWhenNotHovered = true;
-        settings.labelsOnHover = true;
-        settings.iconSpacingPreset = L"comfortable";
-    }
-    else if (preset == L"custom")
-    {
-        settings.textOnlyMode = false;
-        settings.rollupWhenNotHovered = false;
-        settings.transparentWhenNotHovered = GetSettingBool(L"theme.effects.transparency", true);
         settings.labelsOnHover = true;
         settings.iconSpacingPreset = L"comfortable";
     }
@@ -376,7 +423,12 @@ FencePresentationSettings VisualModesPlugin::BuildPresentationFromPreset(const s
         settings.rollupWhenNotHovered = false;
         settings.transparentWhenNotHovered = false;
         settings.labelsOnHover = true;
-        settings.iconSpacingPreset = L"comfortable";
+        settings.iconSpacingPreset = L"spacious";
+    }
+
+    if (GetSettingBool(L"theme.keep_title_bar_visible", true) && settings.rollupWhenNotHovered)
+    {
+        settings.transparentWhenNotHovered = false;
     }
 
     return settings;
@@ -407,3 +459,5 @@ void VisualModesPlugin::LogInfo(const std::wstring& message) const
         m_context.diagnostics->Info(L"[VisualModes] " + message);
     }
 }
+
+

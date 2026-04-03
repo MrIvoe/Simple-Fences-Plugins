@@ -3,6 +3,7 @@
 #include "extensions/MenuContributionRegistry.h"
 #include "extensions/PluginSettingsRegistry.h"
 #include "extensions/SettingsSchema.h"
+#include "../../shared/PluginUiPatterns.h"
 
 #include <chrono>
 #include <filesystem>
@@ -19,7 +20,7 @@ PluginManifest ProductivityActionsPlugin::GetManifest() const
     PluginManifest m;
     m.id = L"community.productivity_actions";
     m.displayName = L"Productivity Actions";
-    m.version = L"1.0.0";
+    m.version = L"1.1.1";
     m.description = L"Adds practical multi-step commands for daily fence workflows.";
     m.minHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
     m.maxHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
@@ -61,11 +62,7 @@ void ProductivityActionsPlugin::RegisterSettings() const
 
     page.fields.push_back(SettingsFieldDescriptor{L"plugin.enabled", L"Enable plugin", L"Master toggle for Productivity Actions behavior.", SettingsFieldType::Bool, L"true", {}, 1});
     page.fields.push_back(SettingsFieldDescriptor{L"plugin.log_actions", L"Log actions", L"Write productivity action operations to diagnostics.", SettingsFieldType::Bool, L"true", {}, 2});
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.show_notifications", L"Show notifications", L"Show user-facing notifications for productivity actions when supported.", SettingsFieldType::Bool, L"false", {}, 3});
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.safe_mode", L"Safe mode", L"Use safer non-destructive productivity defaults.", SettingsFieldType::Bool, L"true", {}, 4});
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.default_mode", L"Default mode", L"Default productivity action profile.", SettingsFieldType::Enum, L"balanced", {{L"balanced", L"Balanced"}, {L"fast", L"Fast"}, {L"cautious", L"Cautious"}}, 5});
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.config_source", L"Config source", L"Configuration source identifier for this plugin.", SettingsFieldType::String, L"local", {}, 6});
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.refresh_interval_seconds", L"Refresh interval (s)", L"Preferred interval for productivity update checks.", SettingsFieldType::Int, L"120", {}, 7});
+    PluginUiPatterns::AppendBaselineSettingsFields(page.fields, 1, 120, false);
 
     page.fields.push_back(SettingsFieldDescriptor{L"prod.enabled", L"Enable productivity actions", L"Master toggle for productivity actions.", SettingsFieldType::Bool, L"true", {}, 10});
     page.fields.push_back(SettingsFieldDescriptor{L"prod.confirm_batch", L"Confirm batch operations", L"Require confirmation for bulk actions.", SettingsFieldType::Bool, L"true", {}, 20});
@@ -523,3 +520,5 @@ fs::path ProductivityActionsPlugin::BuildUniquePath(const fs::path& target)
 
     return target;
 }
+
+

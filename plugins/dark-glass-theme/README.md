@@ -6,12 +6,24 @@ A translucent appearance plugin that provides a frosted-glass aesthetic for fenc
 
 This plugin is enabled by default and registers a complete appearance capability with 17+ persistent settings across two pages (Glass Style and Glass Behavior). The host can apply these styles to fence window rendering.
 
+## Commands
+
+- `dark_glass.reapply_theme`: reapplies the current Dark Glass settings immediately across fences.
+- `dark_glass.preview_toggle`: flips `dark_glass.style.enabled` on/off and reapplies in one step for A/B testing.
+
+## Quick validation path
+
+- Open tray menu and choose **Reapply Dark Glass Theme** to validate changed settings without restarting the host.
+- Open tray menu and choose **Toggle Dark Glass Preview** for one-click enabled/disabled comparisons.
+- If `dark_glass.style.enabled` is false, reapply is intentionally skipped.
+
 ## What it does now
 
 - registers the `appearance` capability with theme metadata
 - declares two settings pages: **Glass Style** (core opacity, blur, borders, colors) and **Glass Behavior** (shadows, transparency, animations)
 - provides stable settings keys for glass effect parameters
 - supports dynamic adaptation based on battery status
+- provides a command-triggered reapply path for rapid settings validation
 
 ## Key settings
 

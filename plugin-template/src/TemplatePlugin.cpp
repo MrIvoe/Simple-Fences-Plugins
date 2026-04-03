@@ -2,13 +2,14 @@
 
 #include "extensions/PluginSettingsRegistry.h"
 #include "extensions/SettingsSchema.h"
+#include "../../plugins/shared/PluginUiPatterns.h"
 
 PluginManifest TemplatePlugin::GetManifest() const
 {
     PluginManifest manifest;
     manifest.id           = L"community.template_plugin";
     manifest.displayName  = L"Template Plugin";
-    manifest.version      = L"0.1.0";
+    manifest.version      = L"0.1.1";
     manifest.description  = L"Starter template for a SimpleFences community plugin.";
     manifest.capabilities = {L"settings_pages"};
     return manifest;
@@ -26,6 +27,8 @@ bool TemplatePlugin::Initialize(const PluginContext& context)
     page.pageId   = L"template.general";
     page.title    = L"General";
     page.order    = 10;
+
+    PluginUiPatterns::AppendBaselineSettingsFields(page.fields, 1, 60, false);
 
     page.fields.push_back(SettingsFieldDescriptor{
         L"template.general.enabled",

@@ -6,6 +6,7 @@
 #include "extensions/MenuContributionRegistry.h"
 #include "extensions/PluginSettingsRegistry.h"
 #include "extensions/SettingsSchema.h"
+#include "../../shared/PluginUiPatterns.h"
 
 #include <algorithm>
 #include <filesystem>
@@ -23,7 +24,7 @@ PluginManifest FolderPortalPlugin::GetManifest() const
     PluginManifest m;
     m.id = L"community.folder_portal";
     m.displayName = L"Folder Portal";
-    m.version = L"1.2.0";
+    m.version = L"1.2.1";
     m.description = L"Fence content provider that mirrors an existing source folder with health-aware state updates.";
     m.minHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
     m.maxHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
@@ -128,7 +129,8 @@ void FolderPortalPlugin::RefreshFenceWithThrottle(const std::wstring& fenceId) c
     }
 
     const auto now = std::chrono::steady_clock::now();
-    if (m_lastRefreshAt.time_since_epoch().count() != 0 && (now - m_lastRefreshAt) < std::chrono::seconds(seconds))
+    const auto it = m_lastRefreshAtByFence.find(fenceId);
+    if (it != m_lastRefreshAtByFence.end() && (now - it->second) < std::chrono::seconds(seconds))
     {
         if (m_context.diagnostics)
         {
@@ -137,7 +139,7 @@ void FolderPortalPlugin::RefreshFenceWithThrottle(const std::wstring& fenceId) c
         return;
     }
 
-    m_lastRefreshAt = now;
+    m_lastRefreshAtByFence[fenceId] = now;
     m_context.appCommands->RefreshFence(fenceId);
 }
 
@@ -154,8 +156,7 @@ void FolderPortalPlugin::RegisterSettings() const
     general.title = L"General";
     general.order = 10;
 
-    general.fields.push_back(SettingsFieldDescriptor{L"plugin.show_notifications", L"Show notifications", L"Emit user-facing notification events to diagnostics.", SettingsFieldType::Bool, L"false", {}, 1});
-    general.fields.push_back(SettingsFieldDescriptor{L"plugin.refresh_interval_seconds", L"Refresh interval (s)", L"Minimum interval between portal refresh requests.", SettingsFieldType::Int, L"60", {}, 2});
+    PluginUiPatterns::AppendBaselineSettingsFields(general.fields, 1, 60, false);
     general.fields.push_back(SettingsFieldDescriptor{L"portal.general.enabled", L"Enable folder portals", L"Master toggle for folder portal behavior.", SettingsFieldType::Bool, L"true", {}, 10});
     general.fields.push_back(SettingsFieldDescriptor{L"portal.general.default_mode", L"Default portal mode", L"Select how portal drag and drop is handled.", SettingsFieldType::Enum, L"read_only", {{L"read_only", L"Read-only"}, {L"copy_in", L"Copy into source"}, {L"move_in", L"Move into source"}}, 20});
     general.fields.push_back(SettingsFieldDescriptor{L"portal.general.allow_open", L"Allow open source", L"Allow opening portal source folder from command surfaces.", SettingsFieldType::Bool, L"true", {}, 25});
@@ -637,3 +638,4 @@ void FolderPortalPlugin::UpdatePortalHealth(const FenceMetadata& fence) const
 
     m_context.appCommands->UpdateFenceContentState(fence.id, L"ready", L"");
 }
+

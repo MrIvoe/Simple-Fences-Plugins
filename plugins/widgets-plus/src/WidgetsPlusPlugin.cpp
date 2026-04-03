@@ -3,13 +3,14 @@
 #include "extensions/MenuContributionRegistry.h"
 #include "extensions/PluginSettingsRegistry.h"
 #include "extensions/SettingsSchema.h"
+#include "../../shared/PluginUiPatterns.h"
 
 PluginManifest WidgetsPlusPlugin::GetManifest() const
 {
     PluginManifest m;
     m.id = L"community.widgets_plus";
     m.displayName = L"Widgets Plus";
-    m.version = L"1.0.0";
+    m.version = L"1.0.1";
     m.description = L"Provides embeddable utility widgets with bounded refresh and persisted state.";
     m.minHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
     m.maxHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
@@ -49,8 +50,7 @@ void WidgetsPlusPlugin::RegisterSettings() const
     page.title = L"Widgets Plus";
     page.order = 70;
 
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.show_notifications", L"Show notifications", L"Emit user-facing notification events to diagnostics.", SettingsFieldType::Bool, L"false", {}, 1});
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.refresh_interval_seconds", L"Refresh interval (s)", L"Minimum interval between widget refresh operations.", SettingsFieldType::Int, L"60", {}, 2});
+    PluginUiPatterns::AppendBaselineSettingsFields(page.fields, 1, 60, false);
     page.fields.push_back(SettingsFieldDescriptor{L"widgets.enabled", L"Enable widgets", L"Master toggle for widgets functionality.", SettingsFieldType::Bool, L"true", {}, 10});
     page.fields.push_back(SettingsFieldDescriptor{L"widgets.refresh_seconds_default", L"Default refresh interval (s)", L"Default refresh interval for widget content.", SettingsFieldType::Int, L"60", {}, 20});
     page.fields.push_back(SettingsFieldDescriptor{L"widgets.pause_on_battery_or_fullscreen", L"Pause on battery or fullscreen", L"Pause widget refresh for power or fullscreen workloads.", SettingsFieldType::Bool, L"true", {}, 30});
@@ -186,13 +186,14 @@ void WidgetsPlusPlugin::RefreshFenceWithThrottle(const std::wstring& fenceId) co
     }
 
     const auto now = std::chrono::steady_clock::now();
-    if (m_lastRefreshAt.time_since_epoch().count() != 0 && (now - m_lastRefreshAt) < std::chrono::seconds(seconds))
+    const auto it = m_lastRefreshAtByFence.find(fenceId);
+    if (it != m_lastRefreshAtByFence.end() && (now - it->second) < std::chrono::seconds(seconds))
     {
         LogInfo(L"Widget refresh throttled by plugin.refresh_interval_seconds");
         return;
     }
 
-    m_lastRefreshAt = now;
+    m_lastRefreshAtByFence[fenceId] = now;
     m_context.appCommands->RefreshFence(fenceId);
 }
 
@@ -203,3 +204,5 @@ void WidgetsPlusPlugin::LogInfo(const std::wstring& message) const
         m_context.diagnostics->Info(L"[WidgetsPlus] " + message);
     }
 }
+
+

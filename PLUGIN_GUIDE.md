@@ -107,6 +107,7 @@ Implementation:
 
 #include "extensions/PluginSettingsRegistry.h"
 #include "extensions/SettingsSchema.h"
+#include "../../plugins/shared/PluginUiPatterns.h"
 
 PluginManifest MyPlugin::GetManifest() const
 {
@@ -128,6 +129,8 @@ bool MyPlugin::Initialize(const PluginContext& context)
         page.pageId   = L"my_plugin.general";
         page.title    = L"General";
         page.order    = 10;
+
+        PluginUiPatterns::AppendBaselineSettingsFields(page.fields, 1, 60, false);
 
         page.fields.push_back(SettingsFieldDescriptor{
             L"my_plugin.general.enabled",
@@ -204,6 +207,17 @@ plugins.push_back(std::make_unique<MyPlugin>());
 | `Enum` | Drop-down | One of the declared option values |
 
 Values are persisted automatically to `%LOCALAPPDATA%\SimpleFences\settings.json`.
+
+## 5.1 Shared UI consistency helper
+
+The host renders plugin settings pages with a common Win32 form layout. For consistent UI/UX across plugins, use `plugins/shared/PluginUiPatterns.h` for baseline fields and ordering.
+
+Recommended baseline keys on every plugin settings surface:
+
+- `plugin.show_notifications`
+- `plugin.refresh_interval_seconds`
+
+This keeps plugin configuration pages visually and behaviorally aligned with host expectations.
 
 ## 6. Naming conventions
 
