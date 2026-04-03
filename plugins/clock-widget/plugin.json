@@ -3,8 +3,9 @@
   "displayName": "Clock Widget",
   "version": "1.2.1",
   "description": "A configurable clock widget with digital, analogue, and dashboard-style display settings.",
-  "author": "Community",
-  "minHostVersion": "0.0.009",
+  "author": "SimpleFences Community",
+  "minHostVersion": "0.0.012",
+  "enabledByDefault": true,
   "capabilities": [
     "widgets",
     "settings_pages"

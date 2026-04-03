@@ -75,6 +75,12 @@ void SortingCleanupPlugin::RegisterSettings() const
     page.fields.push_back(SettingsFieldDescriptor{L"auto.on_item_add", L"Enable autosort on item add", L"Enable autosort mode for item-add triggers.", SettingsFieldType::Bool, L"false", {}, 100});
     page.fields.push_back(SettingsFieldDescriptor{L"auto.debounce_ms", L"Autosort debounce (ms)", L"Debounce interval for autosort trigger bursts.", SettingsFieldType::Int, L"800", {}, 110});
 
+    page.fields.push_back(SettingsFieldDescriptor{L"sort.secondary_key", L"Secondary sort key", L"Tiebreaker sort key applied when two items compare equal on the primary key.", SettingsFieldType::Enum, L"name", {{L"name", L"Name"}, {L"modified", L"Modified"}, {L"size", L"Size"}, {L"none", L"None"}}, 120});
+    page.fields.push_back(SettingsFieldDescriptor{L"sort.shortcuts_last", L"Sort shortcuts last", L"Place .lnk shortcut files after regular files regardless of the primary sort key.", SettingsFieldType::Bool, L"false", {}, 130});
+    page.fields.push_back(SettingsFieldDescriptor{L"sort.natural_number_order", L"Natural number sort", L"Sort filenames containing numbers in natural order (e.g. file2 before file10).", SettingsFieldType::Bool, L"true", {}, 140});
+    page.fields.push_back(SettingsFieldDescriptor{L"auto.scope", L"Autosort scope", L"Choose whether autosort triggers apply to all fences or only the fence where an item was added.", SettingsFieldType::Enum, L"active_fence", {{L"active_fence", L"Active fence only"}, {L"all_fences", L"All fences"}}, 150});
+    page.fields.push_back(SettingsFieldDescriptor{L"layout.confirm_cleanup", L"Confirm before cleanup", L"Ask for confirmation before the clean-up operation removes empty subfolders.", SettingsFieldType::Bool, L"true", {}, 160});
+
     m_context.settingsRegistry->RegisterPage(std::move(page));
 }
 

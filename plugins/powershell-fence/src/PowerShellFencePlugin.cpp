@@ -275,6 +275,70 @@ bool PowerShellFencePlugin::Initialize(const PluginContext& context)
 
     context.settingsRegistry->RegisterPage(std::move(safetyPage));
 
+    PluginSettingsPage outputPage;
+    outputPage.pluginId = L"community.powershell_fence";
+    outputPage.pageId   = L"ps_fence.output";
+    outputPage.title    = L"Output";
+    outputPage.order    = 40;
+
+    outputPage.fields.push_back(SettingsFieldDescriptor{
+        L"ps_fence.output.color_scheme",
+        L"Output color scheme",
+        L"Color palette applied to terminal output inside the workspace.",
+        SettingsFieldType::Enum, L"auto",
+        {
+            {L"auto",        L"Auto (follow system)"},
+            {L"dark",        L"Dark"},
+            {L"light",       L"Light"},
+            {L"high_contrast", L"High contrast"},
+        },
+        10
+    });
+
+    outputPage.fields.push_back(SettingsFieldDescriptor{
+        L"ps_fence.output.wrap_long_lines",
+        L"Wrap long lines",
+        L"Soft-wrap output lines that exceed the terminal width rather than scrolling horizontally.",
+        SettingsFieldType::Bool, L"true", {}, 20
+    });
+
+    outputPage.fields.push_back(SettingsFieldDescriptor{
+        L"ps_fence.output.font_size_pt",
+        L"Font size (pt)",
+        L"Terminal font size in points. Set to 0 to inherit the system default.",
+        SettingsFieldType::Int, L"0", {}, 30
+    });
+
+    outputPage.fields.push_back(SettingsFieldDescriptor{
+        L"ps_fence.output.show_timestamp_prefix",
+        L"Show timestamp prefix",
+        L"Prefix each output line with a timestamp when the host renderer supports it.",
+        SettingsFieldType::Bool, L"false", {}, 40
+    });
+
+    outputPage.fields.push_back(SettingsFieldDescriptor{
+        L"ps_fence.output.history_persist",
+        L"Persist command history",
+        L"Save and restore command history between fence sessions.",
+        SettingsFieldType::Bool, L"true", {}, 50
+    });
+
+    outputPage.fields.push_back(SettingsFieldDescriptor{
+        L"ps_fence.output.history_max_entries",
+        L"Max history entries",
+        L"Maximum number of past commands retained in the persistent history store.",
+        SettingsFieldType::Int, L"500", {}, 60
+    });
+
+    outputPage.fields.push_back(SettingsFieldDescriptor{
+        L"ps_fence.output.copy_on_select",
+        L"Copy on select",
+        L"Automatically copy selected output text to the clipboard.",
+        SettingsFieldType::Bool, L"false", {}, 70
+    });
+
+    context.settingsRegistry->RegisterPage(std::move(outputPage));
+
     RefreshWorkspaceFencesWithThrottle();
     Notify(L"PowerShell workspace provider initialized.");
     return true;

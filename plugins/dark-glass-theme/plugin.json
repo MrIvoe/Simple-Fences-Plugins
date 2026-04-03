@@ -3,8 +3,9 @@
   "displayName": "Dark Glass Theme",
   "version": "1.2.3",
   "description": "Translucent dark theme for fence windows with a frosted-glass look.",
-  "author": "Community",
-  "minHostVersion": "0.0.009",
+  "author": "SimpleFences Community",
+  "minHostVersion": "0.0.012",
+  "enabledByDefault": true,
   "capabilities": [
     "appearance",
     "settings_pages",

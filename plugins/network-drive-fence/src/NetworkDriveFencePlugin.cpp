@@ -209,6 +209,56 @@ bool NetworkDriveFencePlugin::Initialize(const PluginContext& context)
         });
 
         context.settingsRegistry->RegisterPage(std::move(accessPage));
+
+        PluginSettingsPage filterPage;
+        filterPage.pluginId = L"community.network_drive_fence";
+        filterPage.pageId   = L"net_fence.filter";
+        filterPage.title    = L"Filter";
+        filterPage.order    = 40;
+
+        filterPage.fields.push_back(SettingsFieldDescriptor{
+            L"net_fence.filter.hide_hidden",
+            L"Hide hidden items",
+            L"Exclude items with the hidden attribute from the fence listing.",
+            SettingsFieldType::Bool, L"true", {}, 10
+        });
+
+        filterPage.fields.push_back(SettingsFieldDescriptor{
+            L"net_fence.filter.hide_system",
+            L"Hide system items",
+            L"Exclude items with the system attribute from the fence listing.",
+            SettingsFieldType::Bool, L"true", {}, 20
+        });
+
+        filterPage.fields.push_back(SettingsFieldDescriptor{
+            L"net_fence.filter.extensions_allowlist",
+            L"Extension allowlist",
+            L"Comma-separated list of file extensions to show (e.g. docx,xlsx,pdf). Leave blank to allow all.",
+            SettingsFieldType::String, L"", {}, 30
+        });
+
+        filterPage.fields.push_back(SettingsFieldDescriptor{
+            L"net_fence.filter.extensions_blocklist",
+            L"Extension blocklist",
+            L"Comma-separated list of file extensions to hide (e.g. tmp,bak). Evaluated after the allowlist.",
+            SettingsFieldType::String, L"", {}, 40
+        });
+
+        filterPage.fields.push_back(SettingsFieldDescriptor{
+            L"net_fence.filter.max_items",
+            L"Max listed items",
+            L"Cap the number of items shown per fence for large shares. 0 = unlimited.",
+            SettingsFieldType::Int, L"500", {}, 50
+        });
+
+        filterPage.fields.push_back(SettingsFieldDescriptor{
+            L"net_fence.filter.name_pattern",
+            L"Name filter pattern",
+            L"Optional wildcard pattern to restrict shown items by name (e.g. Report*). Leave blank to show all.",
+            SettingsFieldType::String, L"", {}, 60
+        });
+
+        context.settingsRegistry->RegisterPage(std::move(filterPage));
     }
 
     RefreshNetworkFencesWithThrottle();

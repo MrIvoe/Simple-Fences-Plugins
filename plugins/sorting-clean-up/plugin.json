@@ -11,5 +11,6 @@
     "tray_contributions",
     "settings_pages",
     "desktop_context"
-  ]
+  ],
+  "repository": "https://github.com/MrIvoe/Simple-Fences-Plugins"
 }

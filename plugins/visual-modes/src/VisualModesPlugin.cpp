@@ -156,6 +156,60 @@ void VisualModesPlugin::RegisterSettings() const
     page.fields.push_back(SettingsFieldDescriptor{L"theme.effects.corner_radius_px", L"Corner radius (px)", L"Corner radius used by supported presets.", SettingsFieldType::Int, L"8", {}, 110});
 
     m_context.settingsRegistry->RegisterPage(std::move(page));
+
+    PluginSettingsPage autoSwitchPage;
+    autoSwitchPage.pluginId = L"community.visual_modes";
+    autoSwitchPage.pageId   = L"theme.auto_switch";
+    autoSwitchPage.title    = L"Auto Switch";
+    autoSwitchPage.order    = 50;
+
+    autoSwitchPage.fields.push_back(SettingsFieldDescriptor{
+        L"theme.auto_switch.enabled",
+        L"Enable time-based auto switch",
+        L"Automatically switch the active preset between a day and night theme based on the configured schedule.",
+        SettingsFieldType::Bool, L"false", {}, 10
+    });
+
+    autoSwitchPage.fields.push_back(SettingsFieldDescriptor{
+        L"theme.auto_switch.day_preset",
+        L"Day preset",
+        L"Preset applied during the day period when auto switch is enabled.",
+        SettingsFieldType::Enum, L"graphite_office",
+        Win32ThemeOptions(),
+        20
+    });
+
+    autoSwitchPage.fields.push_back(SettingsFieldDescriptor{
+        L"theme.auto_switch.night_preset",
+        L"Night preset",
+        L"Preset applied during the night period when auto switch is enabled.",
+        SettingsFieldType::Enum, L"nocturne_dark",
+        Win32ThemeOptions(),
+        30
+    });
+
+    autoSwitchPage.fields.push_back(SettingsFieldDescriptor{
+        L"theme.auto_switch.day_start_hour",
+        L"Day start (hour, 0-23)",
+        L"Hour at which the day period begins and the day preset is applied.",
+        SettingsFieldType::Int, L"7", {}, 40
+    });
+
+    autoSwitchPage.fields.push_back(SettingsFieldDescriptor{
+        L"theme.auto_switch.night_start_hour",
+        L"Night start (hour, 0-23)",
+        L"Hour at which the night period begins and the night preset is applied.",
+        SettingsFieldType::Int, L"20", {}, 50
+    });
+
+    autoSwitchPage.fields.push_back(SettingsFieldDescriptor{
+        L"theme.auto_switch.follow_system_dark_mode",
+        L"Follow system dark mode",
+        L"When enabled, override the schedule and switch presets whenever Windows dark mode changes.",
+        SettingsFieldType::Bool, L"false", {}, 60
+    });
+
+    m_context.settingsRegistry->RegisterPage(std::move(autoSwitchPage));
 }
 
 void VisualModesPlugin::RegisterMenus() const

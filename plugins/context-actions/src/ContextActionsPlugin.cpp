@@ -66,6 +66,13 @@ void ContextActionsPlugin::RegisterSettings() const
     page.fields.push_back(SettingsFieldDescriptor{L"context.show_fence_background", L"Show on fence background", L"Show context actions on fence background menus.", SettingsFieldType::Bool, L"true", {}, 60});
     page.fields.push_back(SettingsFieldDescriptor{L"context.show_fence_items", L"Show on fence items", L"Show context actions on fence item menus.", SettingsFieldType::Bool, L"true", {}, 70});
 
+    page.fields.push_back(SettingsFieldDescriptor{L"context.max_visible_actions", L"Max visible actions", L"Maximum number of plugin actions shown directly in the menu before overflowing to a submenu.", SettingsFieldType::Int, L"8", {}, 80});
+    page.fields.push_back(SettingsFieldDescriptor{L"context.show_separator_lines", L"Show separator lines", L"Show divider lines between groups of context actions.", SettingsFieldType::Bool, L"true", {}, 90});
+    page.fields.push_back(SettingsFieldDescriptor{L"context.icon_style", L"Action icon style", L"Choose whether icons are shown alongside context action labels.", SettingsFieldType::Enum, L"subtle", {{L"none", L"None"}, {L"subtle", L"Subtle"}, {L"full", L"Full"}}, 100});
+    page.fields.push_back(SettingsFieldDescriptor{L"context.confirm_destructive", L"Confirm destructive actions", L"Show a confirmation prompt before executing actions flagged as destructive.", SettingsFieldType::Bool, L"true", {}, 110});
+    page.fields.push_back(SettingsFieldDescriptor{L"context.action_cooldown_ms", L"Action cooldown (ms)", L"Minimum milliseconds between repeated command dispatches from the same context action.", SettingsFieldType::Int, L"500", {}, 120});
+    page.fields.push_back(SettingsFieldDescriptor{L"context.keyboard_shortcut_hints", L"Show keyboard shortcut hints", L"Display keyboard shortcut hints alongside context action labels where available.", SettingsFieldType::Bool, L"false", {}, 130});
+
     m_context.settingsRegistry->RegisterPage(std::move(page));
 }
 

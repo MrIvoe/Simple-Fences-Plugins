@@ -179,6 +179,70 @@ bool ClockWidgetPlugin::Initialize(const PluginContext& context)
 
     context.settingsRegistry->RegisterPage(std::move(behaviorPage));
 
+    PluginSettingsPage appearancePage;
+    appearancePage.pluginId = L"community.clock_widget";
+    appearancePage.pageId   = L"clock.appearance";
+    appearancePage.title    = L"Appearance";
+    appearancePage.order    = 30;
+
+    appearancePage.fields.push_back(SettingsFieldDescriptor{
+        L"clock.appearance.font_family",
+        L"Font family",
+        L"Font family hint passed to the host renderer for digital clock text. Leave blank for system default.",
+        SettingsFieldType::String, L"", {}, 10
+    });
+
+    appearancePage.fields.push_back(SettingsFieldDescriptor{
+        L"clock.appearance.text_color_hex",
+        L"Text color",
+        L"Override clock text color using a hex value such as #E4ECF7. Leave blank to use the theme default.",
+        SettingsFieldType::String, L"", {}, 20
+    });
+
+    appearancePage.fields.push_back(SettingsFieldDescriptor{
+        L"clock.appearance.background_color_hex",
+        L"Background color",
+        L"Optional background color for the widget area (#RRGGBB). Leave blank for a transparent background.",
+        SettingsFieldType::String, L"", {}, 30
+    });
+
+    appearancePage.fields.push_back(SettingsFieldDescriptor{
+        L"clock.appearance.padding_px",
+        L"Content padding (px)",
+        L"Inner padding between the widget edge and the clock face.",
+        SettingsFieldType::Int, L"8", {}, 40
+    });
+
+    appearancePage.fields.push_back(SettingsFieldDescriptor{
+        L"clock.appearance.hour_hand_color_hex",
+        L"Analogue hour hand color",
+        L"Color of the hour hand in analogue mode (#RRGGBB). Leave blank for the theme default.",
+        SettingsFieldType::String, L"", {}, 50
+    });
+
+    appearancePage.fields.push_back(SettingsFieldDescriptor{
+        L"clock.appearance.second_hand_color_hex",
+        L"Analogue second hand color",
+        L"Accent color for the seconds hand in analogue mode (#RRGGBB). Leave blank for the theme default.",
+        SettingsFieldType::String, L"", {}, 60
+    });
+
+    appearancePage.fields.push_back(SettingsFieldDescriptor{
+        L"clock.appearance.hide_when_fence_small",
+        L"Hide when fence is small",
+        L"Automatically hide the clock face when the fence width or height falls below the minimum.",
+        SettingsFieldType::Bool, L"false", {}, 70
+    });
+
+    appearancePage.fields.push_back(SettingsFieldDescriptor{
+        L"clock.appearance.min_visible_width_px",
+        L"Minimum visible width (px)",
+        L"Below this fence width the clock is hidden when auto-hide is enabled.",
+        SettingsFieldType::Int, L"120", {}, 80
+    });
+
+    context.settingsRegistry->RegisterPage(std::move(appearancePage));
+
     RefreshWidgetPanelsWithThrottle();
     Notify(L"Clock widget initialized.");
 

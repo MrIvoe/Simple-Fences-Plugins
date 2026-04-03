@@ -3,8 +3,9 @@
   "displayName": "PowerShell Workspace Fence",
   "version": "0.2.1",
   "description": "Prototype PowerShell workspace fence with persisted startup, admin, view, and safety settings.",
-  "author": "Community",
-  "minHostVersion": "0.0.009",
+  "author": "SimpleFences Community",
+  "minHostVersion": "0.0.012",
+  "enabledByDefault": false,
   "capabilities": [
     "fence_content_provider",
     "settings_pages"

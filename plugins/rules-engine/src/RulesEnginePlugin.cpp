@@ -152,6 +152,13 @@ void RulesEnginePlugin::RegisterSettings() const
     page.fields.push_back(SettingsFieldDescriptor{L"rules.max_rules_per_item", L"Max rules per item", L"Safety cap for per-item evaluation steps.", SettingsFieldType::Int, L"100", {}, 60});
     page.fields.push_back(SettingsFieldDescriptor{L"rules.prevent_loops", L"Prevent loops", L"Prevent repeated re-routing loops.", SettingsFieldType::Bool, L"true", {}, 70});
 
+    page.fields.push_back(SettingsFieldDescriptor{L"rules.file.path", L"Rules file path", L"Path to the JSON rules file loaded by this plugin. Leave blank to use the built-in default location.", SettingsFieldType::String, L"", {}, 80});
+    page.fields.push_back(SettingsFieldDescriptor{L"rules.file.auto_reload", L"Auto-reload rules file", L"Watch the rules file for changes and reload automatically without restarting.", SettingsFieldType::Bool, L"true", {}, 90});
+    page.fields.push_back(SettingsFieldDescriptor{L"rules.file.schema_version", L"Expected schema version", L"Schema version string the rules loader validates against. Mismatch triggers a load warning.", SettingsFieldType::String, L"1", {}, 100});
+    page.fields.push_back(SettingsFieldDescriptor{L"rules.export.include_disabled", L"Export — include disabled rules", L"Include rules marked as disabled when exporting the rule set.", SettingsFieldType::Bool, L"true", {}, 110});
+    page.fields.push_back(SettingsFieldDescriptor{L"rules.export.format", L"Export format", L"File format used when exporting the rule set.", SettingsFieldType::Enum, L"json", {{L"json", L"JSON"}, {L"json_pretty", L"JSON (pretty-printed)"}}, 120});
+    page.fields.push_back(SettingsFieldDescriptor{L"rules.notification.on_match", L"Notify on rule match", L"Emit a diagnostic notification each time a rule successfully routes an item.", SettingsFieldType::Bool, L"false", {}, 130});
+
     m_context.settingsRegistry->RegisterPage(std::move(page));
 }
 

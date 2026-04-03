@@ -134,6 +134,56 @@ void FenceOrganizerPlugin::RegisterSettings() const
         {},
         80});
 
+    page.fields.push_back(SettingsFieldDescriptor{
+        L"organizer.confirm.destructive_operations",
+        L"Confirm destructive operations",
+        L"Require explicit user confirmation before move or archive operations affect real files.",
+        SettingsFieldType::Bool,
+        L"true",
+        {},
+        90});
+
+    page.fields.push_back(SettingsFieldDescriptor{
+        L"organizer.confirm.skip_recycle_bin",
+        L"Skip Recycle Bin for empty folder cleanup",
+        L"Permanently delete empty folders without sending them to the Recycle Bin.",
+        SettingsFieldType::Bool,
+        L"false",
+        {},
+        100});
+
+    page.fields.push_back(SettingsFieldDescriptor{
+        L"organizer.confirm.skip_locked_files",
+        L"Skip locked files",
+        L"Silently skip files that are locked by another process rather than failing the operation.",
+        SettingsFieldType::Bool,
+        L"true",
+        {},
+        110});
+
+    page.fields.push_back(SettingsFieldDescriptor{
+        L"organizer.archive.date_subfolder_format",
+        L"Archive date subfolder format",
+        L"Date-based subfolder name appended inside the archive folder. Use strftime-style tokens: %Y, %m, %d.",
+        SettingsFieldType::Enum,
+        L"none",
+        {
+            {L"none", L"No date subfolder"},
+            {L"year", L"Year (%Y)"},
+            {L"year_month", L"Year-Month (%Y-%m)"},
+            {L"year_month_day", L"Year-Month-Day (%Y-%m-%d)"},
+        },
+        120});
+
+    page.fields.push_back(SettingsFieldDescriptor{
+        L"organizer.archive.use_modified_time",
+        L"Use modified time for archiving",
+        L"Compare file modified time instead of created time when evaluating the old-file threshold.",
+        SettingsFieldType::Bool,
+        L"true",
+        {},
+        130});
+
     m_context.settingsRegistry->RegisterPage(std::move(page));
 }
 

@@ -59,6 +59,18 @@ void WidgetsPlusPlugin::RegisterSettings() const
     page.fields.push_back(SettingsFieldDescriptor{L"widgets.notes.auto_save", L"Notes auto-save", L"Automatically save note widget content.", SettingsFieldType::Bool, L"true", {}, 60});
     page.fields.push_back(SettingsFieldDescriptor{L"widgets.notes.max_chars", L"Notes max characters", L"Maximum characters for notes widget content.", SettingsFieldType::Int, L"5000", {}, 70});
 
+    page.fields.push_back(SettingsFieldDescriptor{L"widgets.checklist.auto_sort_checked", L"Checklist — move checked to bottom", L"Automatically move checked items to the bottom of the list.", SettingsFieldType::Bool, L"true", {}, 80});
+    page.fields.push_back(SettingsFieldDescriptor{L"widgets.checklist.persist_across_sessions", L"Checklist — persist state", L"Save and restore checklist check state between sessions.", SettingsFieldType::Bool, L"true", {}, 90});
+    page.fields.push_back(SettingsFieldDescriptor{L"widgets.checklist.max_items", L"Checklist — max items", L"Maximum number of items displayed in a checklist widget.", SettingsFieldType::Int, L"100", {}, 100});
+    page.fields.push_back(SettingsFieldDescriptor{L"widgets.checklist.show_item_count", L"Checklist — show item count", L"Display a checked/total count badge on the checklist widget.", SettingsFieldType::Bool, L"true", {}, 110});
+    page.fields.push_back(SettingsFieldDescriptor{L"widgets.animations.enabled", L"Enable widget animations", L"Allow widgets to use animated transitions for state changes.", SettingsFieldType::Bool, L"true", {}, 120});
+    page.fields.push_back(SettingsFieldDescriptor{L"widgets.animations.transition_ms", L"Animation transition (ms)", L"Duration of widget state-change animations in milliseconds.", SettingsFieldType::Int, L"180", {}, 130});
+    page.fields.push_back(SettingsFieldDescriptor{L"widgets.cpu.show_graph", L"CPU — show usage graph", L"Show a mini usage graph in the CPU/system info widget.", SettingsFieldType::Bool, L"true", {}, 140});
+    page.fields.push_back(SettingsFieldDescriptor{L"widgets.cpu.refresh_ms", L"CPU — refresh interval (ms)", L"How often the CPU widget polls system utilization data.", SettingsFieldType::Int, L"2000", {}, 150});
+    page.fields.push_back(SettingsFieldDescriptor{L"widgets.weather.enabled", L"Weather — enable widget", L"Enable the weather information widget type.", SettingsFieldType::Bool, L"false", {}, 160});
+    page.fields.push_back(SettingsFieldDescriptor{L"widgets.weather.location", L"Weather — location", L"City name or coordinates used for weather lookups (e.g. London or 51.5,-0.1). Leave blank to auto-detect.", SettingsFieldType::String, L"", {}, 170});
+    page.fields.push_back(SettingsFieldDescriptor{L"widgets.weather.unit", L"Weather — temperature unit", L"Preferred temperature unit for weather display.", SettingsFieldType::Enum, L"celsius", {{L"celsius", L"Celsius"}, {L"fahrenheit", L"Fahrenheit"}}, 180});
+
     m_context.settingsRegistry->RegisterPage(std::move(page));
 }
 

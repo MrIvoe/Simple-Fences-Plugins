@@ -72,6 +72,13 @@ void ProductivityActionsPlugin::RegisterSettings() const
     page.fields.push_back(SettingsFieldDescriptor{L"prod.archive.destination", L"Archive destination", L"Optional destination folder. Empty uses fence-local _archive.", SettingsFieldType::String, L"", {}, 60});
     page.fields.push_back(SettingsFieldDescriptor{L"prod.rename.pattern", L"Rename pattern", L"Pattern using {name} and {index} tokens.", SettingsFieldType::String, L"{name}_{index}", {}, 70});
 
+    page.fields.push_back(SettingsFieldDescriptor{L"prod.open_all.max_count", L"Open All — max item count", L"Maximum number of items that Open All Items will open without confirmation. 0 = always confirm.", SettingsFieldType::Int, L"10", {}, 80});
+    page.fields.push_back(SettingsFieldDescriptor{L"prod.open_all.confirm_above", L"Open All — confirm above", L"Show a confirmation dialog before opening more than the configured max item count.", SettingsFieldType::Bool, L"true", {}, 90});
+    page.fields.push_back(SettingsFieldDescriptor{L"prod.snapshot.folder", L"Snapshot destination folder", L"Folder where fence snapshot files are saved. Leave blank to save alongside the fence source.", SettingsFieldType::String, L"", {}, 100});
+    page.fields.push_back(SettingsFieldDescriptor{L"prod.snapshot.include_metadata", L"Snapshot — include metadata", L"Include fence metadata such as provider type and display name in the snapshot file.", SettingsFieldType::Bool, L"true", {}, 110});
+    page.fields.push_back(SettingsFieldDescriptor{L"prod.snapshot.format", L"Snapshot format", L"File format for saved fence snapshots.", SettingsFieldType::Enum, L"json", {{L"json", L"JSON"}, {L"text", L"Plain text manifest"}}, 120});
+    page.fields.push_back(SettingsFieldDescriptor{L"prod.project_fence.auto_create_subfolders", L"Auto-create project subfolders", L"Create standard subfolders (src, docs, assets) inside a new project fence.", SettingsFieldType::Bool, L"false", {}, 130});
+
     m_context.settingsRegistry->RegisterPage(std::move(page));
 }
 

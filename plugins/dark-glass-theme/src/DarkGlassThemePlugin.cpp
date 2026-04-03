@@ -190,6 +190,62 @@ bool DarkGlassThemePlugin::Initialize(const PluginContext& context)
 
     context.settingsRegistry->RegisterPage(std::move(behaviorPage));
 
+    PluginSettingsPage palettePage;
+    palettePage.pluginId = L"community.dark_glass_theme";
+    palettePage.pageId   = L"dark_glass.palette";
+    palettePage.title    = L"Palette";
+    palettePage.order    = 30;
+
+    palettePage.fields.push_back(SettingsFieldDescriptor{
+        L"dark_glass.palette.accent_hex",
+        L"Accent color",
+        L"Highlight color for focused fence borders and interactive elements (#RRGGBB). Leave blank to use the system accent.",
+        SettingsFieldType::String, L"", {}, 10
+    });
+
+    palettePage.fields.push_back(SettingsFieldDescriptor{
+        L"dark_glass.palette.icon_tint_mode",
+        L"Icon tint mode",
+        L"Controls how the theme applies tinting to fence item icons.",
+        SettingsFieldType::Enum, L"subtle",
+        {
+            {L"none",   L"None"},
+            {L"subtle", L"Subtle tint"},
+            {L"match",  L"Match tint color"},
+        },
+        20
+    });
+
+    palettePage.fields.push_back(SettingsFieldDescriptor{
+        L"dark_glass.palette.icon_tint_hex",
+        L"Icon tint color",
+        L"Color applied to icons when tint mode is not None (#RRGGBB). Leave blank for the automatic accent color.",
+        SettingsFieldType::String, L"", {}, 30
+    });
+
+    palettePage.fields.push_back(SettingsFieldDescriptor{
+        L"dark_glass.palette.high_contrast_mode",
+        L"High contrast mode",
+        L"Increase text and border contrast for accessibility. Overrides blur and tint settings.",
+        SettingsFieldType::Bool, L"false", {}, 40
+    });
+
+    palettePage.fields.push_back(SettingsFieldDescriptor{
+        L"dark_glass.palette.text_scale_percent",
+        L"Text scale (%)",
+        L"Scale factor applied to fence label text when the theme is active. 100 = default size.",
+        SettingsFieldType::Int, L"100", {}, 50
+    });
+
+    palettePage.fields.push_back(SettingsFieldDescriptor{
+        L"dark_glass.palette.separator_color_hex",
+        L"Separator color",
+        L"Color of section dividers inside fence panels (#RRGGBB). Leave blank to derive from the tint color.",
+        SettingsFieldType::String, L"", {}, 60
+    });
+
+    context.settingsRegistry->RegisterPage(std::move(palettePage));
+
     RegisterMenus();
     RegisterCommands();
 
