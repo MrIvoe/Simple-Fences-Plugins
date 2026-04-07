@@ -24,6 +24,9 @@ Recommended host implementation modules:
 - Enforce compatibility ranges and channels.
 - Enforce hash/signature policy.
 - Keep plugin UI host-rendered with theme tokens.
+- Accept only `theme.source = win32_theme_system` for active theme application.
+- Treat `theme.win32.theme_id` as canonical; never use display name as an ID.
+- Use fallback `graphite-office` for unknown theme ids and log diagnostics.
 
 ## Host Test Coverage
 

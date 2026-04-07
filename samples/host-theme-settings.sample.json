@@ -1,0 +1,11 @@
+{
+  "theme": {
+    "source": "win32_theme_system",
+    "preset": "sunset-retro",
+    "win32": {
+      "theme_id": "sunset-retro",
+      "display_name": "Sunset Retro",
+      "catalog_version": "2026.04"
+    }
+  }
+}

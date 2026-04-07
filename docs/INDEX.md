@@ -13,6 +13,7 @@ Use this page as the documentation landing sidebar/index.
 ## Maintenance Docs
 
 - [Host Integration](HOST_INTEGRATION.md)
+- [Theme Package Contract](THEME_PACKAGE_CONTRACT.md)
 - [Plugin README Template](PLUGIN_README_TEMPLATE.md)
 - [Unused File Audit](UNUSED_FILE_AUDIT.md)
 

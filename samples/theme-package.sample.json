@@ -1,0 +1,20 @@
+{
+  "$schema": "../theme-package.schema.json",
+  "id": "sunset-retro",
+  "displayName": "Sunset Retro",
+  "version": "1.0.0",
+  "source": "win32_theme_system",
+  "description": "Warm retro palette with clear contrast.",
+  "author": "Community Author",
+  "website": "https://example.invalid/theme-author",
+  "previewImage": "https://example.invalid/theme-author/sunset-retro-preview.png",
+  "tokens": {
+    "surface.window": "#1f1c1a",
+    "surface.panel": "#2a2522",
+    "surface.card": "#332d29",
+    "text.primary": "#f6e6d8",
+    "text.secondary": "#d9c4b1",
+    "accent.primary": "#ff8f5a",
+    "border.default": "#5e4f45"
+  }
+}

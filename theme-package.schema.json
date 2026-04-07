@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/MrIvoe/Simple-Fences-Plugins/theme-package.schema.json",
+  "title": "SimpleFences Theme Package",
+  "type": "object",
+  "required": [
+    "id",
+    "displayName",
+    "version",
+    "source",
+    "tokens"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "displayName": { "type": "string", "minLength": 1 },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "source": {
+      "type": "string",
+      "const": "win32_theme_system"
+    },
+    "description": { "type": "string" },
+    "author": { "type": "string" },
+    "website": {
+      "type": "string",
+      "format": "uri"
+    },
+    "previewImage": {
+      "type": "string",
+      "format": "uri"
+    },
+    "tokens": {
+      "type": "object",
+      "minProperties": 1,
+      "patternProperties": {
+        "^[a-z][a-z0-9_.-]*$": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
