@@ -8,6 +8,16 @@
   "maxHostVersion": "0.1.999",
   "minHostApiVersion": "0.0.012",
   "maxHostApiVersion": "0.1.999",
+  "compatibility": {
+    "hostVersion": {
+      "min": "0.0.013",
+      "max": "0.1.999"
+    },
+    "hostApiVersion": {
+      "min": "0.0.012",
+      "max": "0.1.999"
+    }
+  },
   "enabledByDefault": true,
   "supportsSettingsPage": true,
   "supportsMainContentPage": false,
@@ -15,6 +25,10 @@
   "updateChannelId": "stable",
   "capabilities": [
     "settings_pages"
+  ],
+  "permissions": [
+    "read_settings",
+    "write_settings"
   ],
   "repository": "https://github.com/MrIvoe/Simple-Fences-Plugins",
   "supportsHostedSummaryPanel": true,

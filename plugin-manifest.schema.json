@@ -9,10 +9,6 @@
     "version",
     "description",
     "author",
-    "minHostVersion",
-    "maxHostVersion",
-    "minHostApiVersion",
-    "maxHostApiVersion",
     "enabledByDefault",
     "supportsSettingsPage",
     "supportsMainContentPage",
@@ -22,6 +18,21 @@
     "hostedSummaryPanel",
     "capabilities",
     "repository"
+  ],
+  "oneOf": [
+    {
+      "required": [
+        "minHostVersion",
+        "maxHostVersion",
+        "minHostApiVersion",
+        "maxHostApiVersion"
+      ]
+    },
+    {
+      "required": [
+        "compatibility"
+      ]
+    }
   ],
   "properties": {
     "id": {
@@ -39,6 +50,43 @@
     "maxHostVersion": { "type": "string", "minLength": 1 },
     "minHostApiVersion": { "type": "string", "minLength": 1 },
     "maxHostApiVersion": { "type": "string", "minLength": 1 },
+    "compatibility": {
+      "type": "object",
+      "required": ["hostVersion", "hostApiVersion"],
+      "properties": {
+        "hostVersion": {
+          "type": "object",
+          "required": ["min", "max"],
+          "properties": {
+            "min": {
+              "type": "string",
+              "pattern": "^\\d+\\.\\d+\\.\\d+$"
+            },
+            "max": {
+              "type": "string",
+              "pattern": "^\\d+\\.\\d+\\.\\d+$"
+            }
+          },
+          "additionalProperties": false
+        },
+        "hostApiVersion": {
+          "type": "object",
+          "required": ["min", "max"],
+          "properties": {
+            "min": {
+              "type": "string",
+              "pattern": "^\\d+\\.\\d+\\.\\d+$"
+            },
+            "max": {
+              "type": "string",
+              "pattern": "^\\d+\\.\\d+\\.\\d+$"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
     "enabledByDefault": { "type": "boolean" },
     "supportsSettingsPage": { "type": "boolean" },
     "supportsMainContentPage": { "type": "boolean" },
@@ -77,6 +125,23 @@
       "type": "array",
       "minItems": 1,
       "items": { "type": "string", "minLength": 1 }
+    },
+    "permissions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "read_fence_metadata",
+          "write_fence_settings",
+          "read_settings",
+          "write_settings",
+          "network_access",
+          "filesystem_read",
+          "filesystem_write",
+          "execute_host_commands"
+        ]
+      }
     },
     "repository": { "type": "string", "format": "uri" }
   },

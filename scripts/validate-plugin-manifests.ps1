@@ -9,10 +9,6 @@ $requiredKeys = @(
     'version',
     'description',
     'author',
-    'minHostVersion',
-    'maxHostVersion',
-    'minHostApiVersion',
-    'maxHostApiVersion',
     'enabledByDefault',
     'supportsSettingsPage',
     'supportsMainContentPage',
@@ -22,6 +18,26 @@ $requiredKeys = @(
     'hostedSummaryPanel',
     'capabilities',
     'repository'
+)
+
+$legacyCompatibilityKeys = @(
+    'minHostVersion',
+    'maxHostVersion',
+    'minHostApiVersion',
+    'maxHostApiVersion'
+)
+
+$semverPattern = '^\d+\.\d+\.\d+$'
+
+$allowedPermissions = @(
+    'read_fence_metadata',
+    'write_fence_settings',
+    'read_settings',
+    'write_settings',
+    'network_access',
+    'filesystem_read',
+    'filesystem_write',
+    'execute_host_commands'
 )
 
 $failures = @()
@@ -51,9 +67,98 @@ foreach ($file in $pluginFiles)
         $failures += "[$($file.FullName)] id must match community.<snake_case>"
     }
 
-    if ($json.PSObject.Properties.Name -contains 'version' -and ($json.version -notmatch '^\d+\.\d+\.\d+$'))
+    if ($json.PSObject.Properties.Name -contains 'version' -and ($json.version -notmatch $semverPattern))
     {
         $failures += "[$($file.FullName)] version must be semantic (x.y.z)"
+    }
+
+    $hasCompatibilityObject = $json.PSObject.Properties.Name -contains 'compatibility'
+    $hasLegacyCompatibility = $true
+    foreach ($legacyKey in $legacyCompatibilityKeys)
+    {
+        if (-not ($json.PSObject.Properties.Name -contains $legacyKey))
+        {
+            $hasLegacyCompatibility = $false
+            break
+        }
+    }
+
+    if (-not $hasCompatibilityObject -and -not $hasLegacyCompatibility)
+    {
+        $failures += "[$($file.FullName)] must include either legacy host compatibility keys or a compatibility object"
+    }
+
+    if ($hasCompatibilityObject)
+    {
+        $compat = $json.compatibility
+        if ($null -eq $compat)
+        {
+            $failures += "[$($file.FullName)] compatibility must not be null"
+        }
+        else
+        {
+            foreach ($scopeKey in @('hostVersion', 'hostApiVersion'))
+            {
+                if (-not ($compat.PSObject.Properties.Name -contains $scopeKey))
+                {
+                    $failures += "[$($file.FullName)] compatibility missing key: $scopeKey"
+                    continue
+                }
+
+                $scope = $compat.$scopeKey
+                if ($null -eq $scope)
+                {
+                    $failures += "[$($file.FullName)] compatibility.$scopeKey must not be null"
+                    continue
+                }
+
+                foreach ($bound in @('min', 'max'))
+                {
+                    if (-not ($scope.PSObject.Properties.Name -contains $bound))
+                    {
+                        $failures += "[$($file.FullName)] compatibility.$scopeKey missing key: $bound"
+                    }
+                    elseif ([string]$scope.$bound -notmatch $semverPattern)
+                    {
+                        $failures += "[$($file.FullName)] compatibility.$scopeKey.$bound must be semantic (x.y.z)"
+                    }
+                }
+            }
+        }
+    }
+
+    if ($hasLegacyCompatibility)
+    {
+        foreach ($legacyKey in $legacyCompatibilityKeys)
+        {
+            if ([string]$json.$legacyKey -notmatch $semverPattern)
+            {
+                $failures += "[$($file.FullName)] $legacyKey must be semantic (x.y.z)"
+            }
+        }
+    }
+
+    if ($hasCompatibilityObject -and $hasLegacyCompatibility)
+    {
+        if ($json.minHostVersion -ne $json.compatibility.hostVersion.min -or
+            $json.maxHostVersion -ne $json.compatibility.hostVersion.max -or
+            $json.minHostApiVersion -ne $json.compatibility.hostApiVersion.min -or
+            $json.maxHostApiVersion -ne $json.compatibility.hostApiVersion.max)
+        {
+            $failures += "[$($file.FullName)] legacy compatibility keys must match compatibility object values when both are present"
+        }
+    }
+
+    if ($json.PSObject.Properties.Name -contains 'permissions')
+    {
+        $permissions = @($json.permissions)
+        foreach ($permission in $permissions)
+        {
+            if ($permission -notin $allowedPermissions)
+            {
+                $failures += "[$($file.FullName)] unsupported permission: $permission"
+            }
+        }
     }
 
     if ($json.PSObject.Properties.Name -contains 'updateChannelId')
