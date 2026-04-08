@@ -33,6 +33,7 @@ Start here:
 - [Create A Plugin](docs/CREATE_A_PLUGIN.md)
 - [Release Guide](docs/RELEASE.md)
 - [Host Integration](docs/HOST_INTEGRATION.md)
+- [Theme Contract](docs/THEME_CONTRACT.md)
 - [Changelog](docs/CHANGELOG.md)
 - [Unused File Audit](docs/UNUSED_FILE_AUDIT.md)
 
