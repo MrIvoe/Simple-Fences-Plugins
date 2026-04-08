@@ -1,0 +1,33 @@
+{
+  "meta": {
+    "source": "tabler-icons",
+    "sourceUrl": "https://github.com/tabler/tabler-icons",
+    "version": "0.0.001",
+    "purpose": "Default icon keys for plugin-facing settings pages and plugin actions; used as fallback before themed icon packs are applied."
+  },
+  "pluginPages": {
+    "visual-modes": "palette",
+    "folder-portal": "folder",
+    "context-actions": "click",
+    "widgets-plus": "layout-cards",
+    "sorting-clean-up": "sort-ascending-shapes",
+    "rules-engine": "binary-tree",
+    "productivity-actions": "bolt",
+    "external-provider": "cloud"
+  },
+  "settingsGroups": {
+    "plugin.manager": "plug-connected",
+    "plugin.compatibility": "shield-check",
+    "plugin.updates": "refresh",
+    "plugin.diagnostics": "activity"
+  },
+  "actions": {
+    "plugin.install": "download",
+    "plugin.enable": "toggle-right",
+    "plugin.disable": "toggle-left",
+    "plugin.update": "refresh",
+    "plugin.remove": "trash",
+    "plugin.rollback": "arrow-back-up",
+    "plugin.settings": "settings"
+  }
+}
