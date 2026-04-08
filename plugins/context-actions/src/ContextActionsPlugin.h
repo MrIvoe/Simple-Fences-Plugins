@@ -5,7 +5,7 @@
 #include <chrono>
 
 // Community plugin: Context Actions
-// Adds contextual command contributions for desktop, fence, and item workflows.
+// Adds contextual command contributions for desktop, space, and item workflows.
 // Capability: commands, desktop_context, settings_pages
 class ContextActionsPlugin final : public IPlugin
 {
@@ -23,9 +23,9 @@ private:
     void RegisterCommands() const;
 
     void HandleNewFolderPortalHere(const CommandContext& command) const;
-    void HandleSortThisFence(const CommandContext& command) const;
-    void HandleCleanupThisFence(const CommandContext& command) const;
-    void HandleApplyThemeThisFence(const CommandContext& command) const;
+    void HandleSortThisSpace(const CommandContext& command) const;
+    void HandleCleanupThisSpace(const CommandContext& command) const;
+    void HandleApplyThemeThisSpace(const CommandContext& command) const;
     void HandlePinSelected(const CommandContext& command) const;
     void HandleRefreshProvider(const CommandContext& command) const;
     void HandleCopyItemMetadata(const CommandContext& command) const;
@@ -33,6 +33,6 @@ private:
     bool GetBool(const std::wstring& key, bool fallback) const;
     int GetInt(const std::wstring& key, int fallback) const;
     void Notify(const std::wstring& message) const;
-    void RefreshFenceWithThrottle(const std::wstring& fenceId) const;
+    void RefreshSpaceWithThrottle(const std::wstring& spaceId) const;
     void LogInfo(const std::wstring& message) const;
 };

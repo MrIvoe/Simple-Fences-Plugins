@@ -1,6 +1,6 @@
 # Visual Modes
 
-Applies global or per-fence visual behavior presets with command routing.
+Applies global or per-Space visual behavior presets with command routing.
 
 ## Plugin Snapshot
 

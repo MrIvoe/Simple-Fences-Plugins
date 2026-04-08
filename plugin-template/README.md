@@ -48,4 +48,4 @@ Ship packaged plugin artifacts and publish update metadata/manifest JSON. Do not
 
 ## Recommended next step
 
-If your plugin adds a new fence content type, follow [docs/CREATE_A_PLUGIN.md](../docs/CREATE_A_PLUGIN.md) and register both `contentType` and `providerId` explicitly.
+If your plugin adds a new Space content type, follow [docs/CREATE_A_PLUGIN.md](../docs/CREATE_A_PLUGIN.md) and register both `contentType` and `providerId` explicitly.

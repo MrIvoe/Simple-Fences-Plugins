@@ -3,7 +3,7 @@
   "displayName": "Widgets Plus",
   "version": "1.0.2",
   "description": "Provides embeddable utility widgets with bounded refresh and persisted state.",
-  "author": "SimpleFences Community",
+  "author": "SimpleSpaces Community",
   "minHostVersion": "0.0.013",
   "maxHostVersion": "0.1.999",
   "minHostApiVersion": "0.0.012",

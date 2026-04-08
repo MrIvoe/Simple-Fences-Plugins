@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/MrIvoe/Spaces-Plugins/plugin-manifest.schema.json",
-  "title": "SimpleFences Plugin Manifest",
+  "title": "SimpleSpaces Plugin Manifest",
   "type": "object",
   "required": [
     "id",
@@ -132,8 +132,8 @@
       "items": {
         "type": "string",
         "enum": [
-          "read_fence_metadata",
-          "write_fence_settings",
+          "read_space_metadata",
+          "write_space_settings",
           "read_settings",
           "write_settings",
           "network_access",

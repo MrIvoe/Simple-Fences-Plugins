@@ -1,8 +1,10 @@
 #include "ClockWidgetPlugin.h"
 
+#include "core/Diagnostics.h"
 #include "extensions/PluginSettingsRegistry.h"
 #include "extensions/SettingsSchema.h"
 #include "../../shared/PluginUiPatterns.h"
+
 
 PluginManifest ClockWidgetPlugin::GetManifest() const
 {
@@ -10,9 +12,9 @@ PluginManifest ClockWidgetPlugin::GetManifest() const
     m.id           = L"community.clock_widget";
     m.displayName  = L"Clock Widget";
     m.version = L"1.2.2";
-    m.description  = L"Configurable digital, analogue, and dashboard clock widget for a fence panel.";
-    m.minHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
-    m.maxHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
+    m.description  = L"Configurable digital, analogue, and dashboard clock widget for a space panel.";
+    m.minHostApiVersion = SimpleSpacesVersion::kPluginApiVersion;
+    m.maxHostApiVersion = SimpleSpacesVersion::kPluginApiVersion;
     m.capabilities = {L"widgets", L"settings_pages"};
     return m;
 }
@@ -38,7 +40,7 @@ bool ClockWidgetPlugin::Initialize(const PluginContext& context)
     page.fields.push_back(SettingsFieldDescriptor{
         L"clock.display.style",
         L"Clock style",
-        L"Choose the visual presentation used inside the fence widget.",
+        L"Choose the visual presentation used inside the space widget.",
         SettingsFieldType::Enum, L"digital",
         {
             {L"digital",  L"Digital"},
@@ -161,7 +163,7 @@ bool ClockWidgetPlugin::Initialize(const PluginContext& context)
     behaviorPage.fields.push_back(SettingsFieldDescriptor{
         L"clock.behavior.pause_when_hidden",
         L"Pause when hidden",
-        L"Reduce widget refresh activity while the fence is minimized or occluded.",
+        L"Reduce widget refresh activity while the space is minimized or occluded.",
         SettingsFieldType::Bool, L"true", {}, 50
     });
 
@@ -230,16 +232,16 @@ bool ClockWidgetPlugin::Initialize(const PluginContext& context)
     });
 
     appearancePage.fields.push_back(SettingsFieldDescriptor{
-        L"clock.appearance.hide_when_fence_small",
-        L"Hide when fence is small",
-        L"Automatically hide the clock face when the fence width or height falls below the minimum.",
+        L"clock.appearance.hide_when_space_small",
+        L"Hide when space is small",
+        L"Automatically hide the clock face when the space width or height falls below the minimum.",
         SettingsFieldType::Bool, L"false", {}, 70
     });
 
     appearancePage.fields.push_back(SettingsFieldDescriptor{
         L"clock.appearance.min_visible_width_px",
         L"Minimum visible width (px)",
-        L"Below this fence width the clock is hidden when auto-hide is enabled.",
+        L"Below this space width the clock is hidden when auto-hide is enabled.",
         SettingsFieldType::Int, L"120", {}, 80
     });
 
@@ -313,13 +315,13 @@ void ClockWidgetPlugin::RefreshWidgetPanelsWithThrottle() const
     }
 
     m_lastRefreshAt = now;
-    const auto ids = m_context.appCommands->GetAllFenceIds();
+    const auto ids = m_context.appCommands->GetAllSpaceIds();
     for (const auto& id : ids)
     {
-        const FenceMetadata fence = m_context.appCommands->GetFenceMetadata(id);
-        if (fence.contentType == L"widget_panel")
+        const SpaceMetadata space = m_context.appCommands->GetSpaceMetadata(id);
+        if (space.contentType == L"widget_panel")
         {
-            m_context.appCommands->RefreshFence(id);
+            m_context.appCommands->RefreshSpace(id);
         }
     }
 }

@@ -1,11 +1,11 @@
-# Fence Sort and Clean Up
+# Space Sort and Clean Up
 
-Sorts and arranges fence items with optional automation and cleanup tools.
+Sorts and arranges Space items with optional automation and cleanup tools.
 
 ## Plugin Snapshot
 
 - Folder: `sorting-clean-up`
-- Plugin ID: `community.fence_sort_cleanup`
+- Plugin ID: `community.space_sort_cleanup`
 - Version: `1.1.2`
 - Capabilities: `commands`, `tray_contributions`, `settings_pages`, `desktop_context`
 

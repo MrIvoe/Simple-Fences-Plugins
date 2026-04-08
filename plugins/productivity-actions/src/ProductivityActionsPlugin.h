@@ -20,14 +20,14 @@ private:
     void RegisterMenus() const;
     void RegisterCommands() const;
 
-    void HandleCreateProjectFence(const CommandContext& command) const;
+    void HandleCreateProjectSpace(const CommandContext& command) const;
     void HandleArchiveOld(const CommandContext& command) const;
     void HandleOpenAll(const CommandContext& command) const;
     void HandleBatchRename(const CommandContext& command) const;
     void HandleSnapshotSave(const CommandContext& command) const;
 
-    std::wstring ResolveFenceId(const CommandContext& command) const;
-    FenceMetadata ResolveFence(const CommandContext& command) const;
+    std::wstring ResolveSpaceId(const CommandContext& command) const;
+    SpaceMetadata ResolveSpace(const CommandContext& command) const;
     bool GetBool(const std::wstring& key, bool fallback) const;
     int GetInt(const std::wstring& key, int fallback) const;
     std::wstring GetString(const std::wstring& key, const std::wstring& fallback) const;
@@ -37,7 +37,7 @@ private:
     std::wstring GetDefaultMode() const;
     int GetRefreshIntervalSeconds() const;
     void Notify(const std::wstring& message) const;
-    void RefreshFenceWithThrottle(const std::wstring& fenceId) const;
+    void RefreshSpaceWithThrottle(const std::wstring& spaceId) const;
     void LogInfo(const std::wstring& message) const;
     void LogWarn(const std::wstring& message) const;
 

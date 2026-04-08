@@ -22,8 +22,8 @@ private:
     void HandleThemeSwitch(const CommandContext& command) const;
     void HandleCompactToggle(const CommandContext& command) const;
     void HandlePresentationToggle(const CommandContext& command) const;
-    void HandleApplyCurrentToFence(const CommandContext& command) const;
-    void HandleResetFence(const CommandContext& command) const;
+    void HandleApplyCurrentToSpace(const CommandContext& command) const;
+    void HandleResetSpace(const CommandContext& command) const;
 
     std::wstring GetSetting(const std::wstring& key, const std::wstring& fallback) const;
     bool GetSettingBool(const std::wstring& key, bool fallback) const;
@@ -34,8 +34,8 @@ private:
     void Notify(const std::wstring& message) const;
     bool CanApplyNow() const;
     void SetPreset(const std::wstring& preset) const;
-    std::wstring ResolveTargetFenceId(const CommandContext& command) const;
-    FencePresentationSettings BuildPresentationFromPreset(const std::wstring& preset) const;
-    void ApplyPresetToFence(const std::wstring& fenceId, const std::wstring& preset, bool applyToAll) const;
+    std::wstring ResolveTargetSpaceId(const CommandContext& command) const;
+    SpacePresentationSettings BuildPresentationFromPreset(const std::wstring& preset) const;
+    void ApplyPresetToSpace(const std::wstring& spaceId, const std::wstring& preset, bool applyToAll) const;
     void LogInfo(const std::wstring& message) const;
 };

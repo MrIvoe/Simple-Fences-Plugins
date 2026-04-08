@@ -3,6 +3,8 @@
 #include "extensions/MenuContributionRegistry.h"
 #include "extensions/PluginSettingsRegistry.h"
 #include "extensions/SettingsSchema.h"
+#include "core/CommandDispatcher.h"
+#include "core/Diagnostics.h"
 #include "../../shared/PluginUiPatterns.h"
 
 #include <chrono>
@@ -10,6 +12,7 @@
 #include <fstream>
 
 #ifdef _WIN32
+#include <windows.h>
 #include <shellapi.h>
 #endif
 
@@ -21,9 +24,9 @@ PluginManifest ProductivityActionsPlugin::GetManifest() const
     m.id = L"community.productivity_actions";
     m.displayName = L"Productivity Actions";
     m.version = L"1.1.2";
-    m.description = L"Adds practical multi-step commands for daily fence workflows.";
-    m.minHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
-    m.maxHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
+    m.description = L"Adds practical multi-step commands for daily space workflows.";
+    m.minHostApiVersion = SimpleSpacesVersion::kPluginApiVersion;
+    m.maxHostApiVersion = SimpleSpacesVersion::kPluginApiVersion;
     m.capabilities = {L"commands", L"tray_contributions", L"settings_pages", L"desktop_context"};
     return m;
 }
@@ -66,18 +69,18 @@ void ProductivityActionsPlugin::RegisterSettings() const
 
     page.fields.push_back(SettingsFieldDescriptor{L"prod.enabled", L"Enable productivity actions", L"Master toggle for productivity actions.", SettingsFieldType::Bool, L"true", {}, 10});
     page.fields.push_back(SettingsFieldDescriptor{L"prod.confirm_batch", L"Confirm batch operations", L"Require confirmation for bulk actions.", SettingsFieldType::Bool, L"true", {}, 20});
-    page.fields.push_back(SettingsFieldDescriptor{L"prod.templates.default", L"Default template", L"Default template when creating project fences.", SettingsFieldType::Enum, L"general", {{L"dev", L"Development"}, {L"design", L"Design"}, {L"media", L"Media"}, {L"general", L"General"}}, 30});
+    page.fields.push_back(SettingsFieldDescriptor{L"prod.templates.default", L"Default template", L"Default template when creating project spaces.", SettingsFieldType::Enum, L"general", {{L"dev", L"Development"}, {L"design", L"Design"}, {L"media", L"Media"}, {L"general", L"General"}}, 30});
     page.fields.push_back(SettingsFieldDescriptor{L"prod.archive.threshold_days", L"Archive threshold (days)", L"Files older than this are archived.", SettingsFieldType::Int, L"30", {}, 40});
     page.fields.push_back(SettingsFieldDescriptor{L"prod.archive.action", L"Archive action", L"Move, copy, or prompt before archiving.", SettingsFieldType::Enum, L"move", {{L"move", L"Move"}, {L"copy", L"Copy"}, {L"prompt", L"Prompt"}}, 50});
-    page.fields.push_back(SettingsFieldDescriptor{L"prod.archive.destination", L"Archive destination", L"Optional destination folder. Empty uses fence-local _archive.", SettingsFieldType::String, L"", {}, 60});
+    page.fields.push_back(SettingsFieldDescriptor{L"prod.archive.destination", L"Archive destination", L"Optional destination folder. Empty uses space-local _archive.", SettingsFieldType::String, L"", {}, 60});
     page.fields.push_back(SettingsFieldDescriptor{L"prod.rename.pattern", L"Rename pattern", L"Pattern using {name} and {index} tokens.", SettingsFieldType::String, L"{name}_{index}", {}, 70});
 
     page.fields.push_back(SettingsFieldDescriptor{L"prod.open_all.max_count", L"Open All — max item count", L"Maximum number of items that Open All Items will open without confirmation. 0 = always confirm.", SettingsFieldType::Int, L"10", {}, 80});
     page.fields.push_back(SettingsFieldDescriptor{L"prod.open_all.confirm_above", L"Open All — confirm above", L"Show a confirmation dialog before opening more than the configured max item count.", SettingsFieldType::Bool, L"true", {}, 90});
-    page.fields.push_back(SettingsFieldDescriptor{L"prod.snapshot.folder", L"Snapshot destination folder", L"Folder where fence snapshot files are saved. Leave blank to save alongside the fence source.", SettingsFieldType::String, L"", {}, 100});
-    page.fields.push_back(SettingsFieldDescriptor{L"prod.snapshot.include_metadata", L"Snapshot — include metadata", L"Include fence metadata such as provider type and display name in the snapshot file.", SettingsFieldType::Bool, L"true", {}, 110});
-    page.fields.push_back(SettingsFieldDescriptor{L"prod.snapshot.format", L"Snapshot format", L"File format for saved fence snapshots.", SettingsFieldType::Enum, L"json", {{L"json", L"JSON"}, {L"text", L"Plain text manifest"}}, 120});
-    page.fields.push_back(SettingsFieldDescriptor{L"prod.project_fence.auto_create_subfolders", L"Auto-create project subfolders", L"Create standard subfolders (src, docs, assets) inside a new project fence.", SettingsFieldType::Bool, L"false", {}, 130});
+    page.fields.push_back(SettingsFieldDescriptor{L"prod.snapshot.folder", L"Snapshot destination folder", L"Folder where space snapshot files are saved. Leave blank to save alongside the space source.", SettingsFieldType::String, L"", {}, 100});
+    page.fields.push_back(SettingsFieldDescriptor{L"prod.snapshot.include_metadata", L"Snapshot — include metadata", L"Include space metadata such as provider type and display name in the snapshot file.", SettingsFieldType::Bool, L"true", {}, 110});
+    page.fields.push_back(SettingsFieldDescriptor{L"prod.snapshot.format", L"Snapshot format", L"File format for saved space snapshots.", SettingsFieldType::Enum, L"json", {{L"json", L"JSON"}, {L"text", L"Plain text manifest"}}, 120});
+    page.fields.push_back(SettingsFieldDescriptor{L"prod.project_space.auto_create_subfolders", L"Auto-create project subfolders", L"Create standard subfolders (src, docs, assets) inside a new project space.", SettingsFieldType::Bool, L"false", {}, 130});
 
     m_context.settingsRegistry->RegisterPage(std::move(page));
 }
@@ -89,24 +92,24 @@ void ProductivityActionsPlugin::RegisterMenus() const
         return;
     }
 
-    m_context.menuRegistry->Register(MenuContribution{MenuSurface::Tray, L"Create Project Fence", L"productivity.create_project_fence", 410, false});
-    m_context.menuRegistry->Register(MenuContribution{MenuSurface::Tray, L"Save Fence Snapshot", L"productivity.snapshot.save", 420, false});
+    m_context.menuRegistry->Register(MenuContribution{MenuSurface::Tray, L"Create Project Space", L"productivity.create_project_space", 410, false});
+    m_context.menuRegistry->Register(MenuContribution{MenuSurface::Tray, L"Save Space Snapshot", L"productivity.snapshot.save", 420, false});
 
-    m_context.menuRegistry->Register(MenuContribution{MenuSurface::FenceContext, L"Archive Old Items", L"productivity.archive_old", 610, true});
-    m_context.menuRegistry->Register(MenuContribution{MenuSurface::FenceContext, L"Batch Rename Items", L"productivity.batch_rename", 620, false});
-    m_context.menuRegistry->Register(MenuContribution{MenuSurface::FenceContext, L"Open All Items", L"productivity.open_all", 630, false});
+    m_context.menuRegistry->Register(MenuContribution{MenuSurface::SpaceContext, L"Archive Old Items", L"productivity.archive_old", 610, true});
+    m_context.menuRegistry->Register(MenuContribution{MenuSurface::SpaceContext, L"Batch Rename Items", L"productivity.batch_rename", 620, false});
+    m_context.menuRegistry->Register(MenuContribution{MenuSurface::SpaceContext, L"Open All Items", L"productivity.open_all", 630, false});
 }
 
 void ProductivityActionsPlugin::RegisterCommands() const
 {
-    m_context.commandDispatcher->RegisterCommand(L"productivity.create_project_fence", [this](const CommandContext& command) { HandleCreateProjectFence(command); });
+    m_context.commandDispatcher->RegisterCommand(L"productivity.create_project_space", [this](const CommandContext& command) { HandleCreateProjectSpace(command); });
     m_context.commandDispatcher->RegisterCommand(L"productivity.archive_old", [this](const CommandContext& command) { HandleArchiveOld(command); });
     m_context.commandDispatcher->RegisterCommand(L"productivity.open_all", [this](const CommandContext& command) { HandleOpenAll(command); });
     m_context.commandDispatcher->RegisterCommand(L"productivity.batch_rename", [this](const CommandContext& command) { HandleBatchRename(command); });
     m_context.commandDispatcher->RegisterCommand(L"productivity.snapshot.save", [this](const CommandContext& command) { HandleSnapshotSave(command); });
 }
 
-void ProductivityActionsPlugin::HandleCreateProjectFence(const CommandContext&) const
+void ProductivityActionsPlugin::HandleCreateProjectSpace(const CommandContext&) const
 {
     if (!IsPluginEnabled() || !GetBool(L"prod.enabled", true))
     {
@@ -115,7 +118,7 @@ void ProductivityActionsPlugin::HandleCreateProjectFence(const CommandContext&) 
 
     const std::wstring preset = GetString(L"prod.templates.default", L"general");
     const std::wstring mode = GetDefaultMode();
-    FenceCreateRequest request;
+    SpaceCreateRequest request;
     request.contentType = L"file_collection";
     request.contentPluginId = L"core.file_collection";
 
@@ -133,14 +136,14 @@ void ProductivityActionsPlugin::HandleCreateProjectFence(const CommandContext&) 
     }
     else
     {
-        request.title = (mode == L"fast") ? L"Quick Project" : L"Project Fence";
+        request.title = (mode == L"fast") ? L"Quick Project" : L"Project Space";
     }
 
-    const std::wstring created = m_context.appCommands->CreateFenceNearCursor(request);
+    const std::wstring created = m_context.appCommands->CreateSpaceNearCursor(request);
     if (!created.empty())
     {
-        LogInfo(L"Created project fence with id=" + created);
-        Notify(L"Project fence created.");
+        LogInfo(L"Created project space with id=" + created);
+        Notify(L"Project space created.");
     }
 }
 
@@ -151,10 +154,10 @@ void ProductivityActionsPlugin::HandleArchiveOld(const CommandContext& command) 
         return;
     }
 
-    const FenceMetadata fence = ResolveFence(command);
-    if (fence.id.empty() || fence.backingFolderPath.empty())
+    const SpaceMetadata space = ResolveSpace(command);
+    if (space.id.empty() || space.backingFolderPath.empty())
     {
-        LogWarn(L"archive_old skipped: no fence context");
+        LogWarn(L"archive_old skipped: no space context");
         return;
     }
 
@@ -166,7 +169,7 @@ void ProductivityActionsPlugin::HandleArchiveOld(const CommandContext& command) 
     }
     const std::wstring configuredDestination = GetString(L"prod.archive.destination", L"");
     fs::path destination = configuredDestination.empty()
-        ? (fs::path(fence.backingFolderPath) / L"_archive")
+        ? (fs::path(space.backingFolderPath) / L"_archive")
         : fs::path(configuredDestination);
 
     const auto cutoff = fs::file_time_type::clock::now() - std::chrono::hours(24 * (days < 1 ? 1 : days));
@@ -174,7 +177,7 @@ void ProductivityActionsPlugin::HandleArchiveOld(const CommandContext& command) 
     fs::create_directories(destination, ec);
 
     size_t changed = 0;
-    for (const auto& entry : fs::directory_iterator(fence.backingFolderPath, fs::directory_options::skip_permission_denied, ec))
+    for (const auto& entry : fs::directory_iterator(space.backingFolderPath, fs::directory_options::skip_permission_denied, ec))
     {
         if (ec)
         {
@@ -225,7 +228,7 @@ void ProductivityActionsPlugin::HandleArchiveOld(const CommandContext& command) 
         ec.clear();
     }
 
-    RefreshFenceWithThrottle(fence.id);
+    RefreshSpaceWithThrottle(space.id);
     LogInfo(L"archive_old processed " + std::to_wstring(changed) + L" item(s)");
     Notify(L"Archive old items completed.");
 }
@@ -237,16 +240,16 @@ void ProductivityActionsPlugin::HandleOpenAll(const CommandContext& command) con
         return;
     }
 
-    const FenceMetadata fence = ResolveFence(command);
-    if (fence.id.empty() || fence.backingFolderPath.empty())
+    const SpaceMetadata space = ResolveSpace(command);
+    if (space.id.empty() || space.backingFolderPath.empty())
     {
-        LogWarn(L"open_all skipped: no fence context");
+        LogWarn(L"open_all skipped: no space context");
         return;
     }
 
 #ifdef _WIN32
     std::error_code ec;
-    for (const auto& entry : fs::directory_iterator(fence.backingFolderPath, fs::directory_options::skip_permission_denied, ec))
+    for (const auto& entry : fs::directory_iterator(space.backingFolderPath, fs::directory_options::skip_permission_denied, ec))
     {
         if (ec)
         {
@@ -261,7 +264,7 @@ void ProductivityActionsPlugin::HandleOpenAll(const CommandContext& command) con
     (void)command;
 #endif
 
-    LogInfo(L"open_all completed for fence " + fence.id);
+    LogInfo(L"open_all completed for space " + space.id);
     Notify(L"Open all items completed.");
 }
 
@@ -272,10 +275,10 @@ void ProductivityActionsPlugin::HandleBatchRename(const CommandContext& command)
         return;
     }
 
-    const FenceMetadata fence = ResolveFence(command);
-    if (fence.id.empty() || fence.backingFolderPath.empty())
+    const SpaceMetadata space = ResolveSpace(command);
+    if (space.id.empty() || space.backingFolderPath.empty())
     {
-        LogWarn(L"batch_rename skipped: no fence context");
+        LogWarn(L"batch_rename skipped: no space context");
         return;
     }
 
@@ -284,7 +287,7 @@ void ProductivityActionsPlugin::HandleBatchRename(const CommandContext& command)
 
     int index = 1;
     size_t renamed = 0;
-    for (const auto& entry : fs::directory_iterator(fence.backingFolderPath, fs::directory_options::skip_permission_denied, ec))
+    for (const auto& entry : fs::directory_iterator(space.backingFolderPath, fs::directory_options::skip_permission_denied, ec))
     {
         if (ec)
         {
@@ -319,7 +322,7 @@ void ProductivityActionsPlugin::HandleBatchRename(const CommandContext& command)
         ++index;
     }
 
-    RefreshFenceWithThrottle(fence.id);
+    RefreshSpaceWithThrottle(space.id);
     LogInfo(L"batch_rename renamed " + std::to_wstring(renamed) + L" item(s)");
     Notify(L"Batch rename completed.");
 }
@@ -331,14 +334,14 @@ void ProductivityActionsPlugin::HandleSnapshotSave(const CommandContext& command
         return;
     }
 
-    const FenceMetadata fence = ResolveFence(command);
-    if (fence.id.empty() || fence.backingFolderPath.empty())
+    const SpaceMetadata space = ResolveSpace(command);
+    if (space.id.empty() || space.backingFolderPath.empty())
     {
-        LogWarn(L"snapshot.save skipped: no fence context");
+        LogWarn(L"snapshot.save skipped: no space context");
         return;
     }
 
-    const fs::path output = fs::path(fence.backingFolderPath) / L"fence-snapshot.txt";
+    const fs::path output = fs::path(space.backingFolderPath) / L"space-snapshot.txt";
     std::ofstream out(output, std::ios::binary | std::ios::trunc);
     if (!out.is_open())
     {
@@ -346,13 +349,13 @@ void ProductivityActionsPlugin::HandleSnapshotSave(const CommandContext& command
         return;
     }
 
-    out << "Fence: ";
-    out.write(reinterpret_cast<const char*>(fence.title.c_str()), static_cast<std::streamsize>(fence.title.size() * sizeof(wchar_t)));
+    out << "Space: ";
+    out.write(reinterpret_cast<const char*>(space.title.c_str()), static_cast<std::streamsize>(space.title.size() * sizeof(wchar_t)));
     out << "\n";
 
     std::error_code ec;
     int count = 0;
-    for (const auto& entry : fs::directory_iterator(fence.backingFolderPath, fs::directory_options::skip_permission_denied, ec))
+    for (const auto& entry : fs::directory_iterator(space.backingFolderPath, fs::directory_options::skip_permission_denied, ec))
     {
         if (ec)
         {
@@ -368,44 +371,44 @@ void ProductivityActionsPlugin::HandleSnapshotSave(const CommandContext& command
 
     out.close();
     LogInfo(L"snapshot.save captured " + std::to_wstring(count) + L" item(s)");
-    Notify(L"Fence snapshot saved.");
+    Notify(L"Space snapshot saved.");
 }
 
-std::wstring ProductivityActionsPlugin::ResolveFenceId(const CommandContext& command) const
+std::wstring ProductivityActionsPlugin::ResolveSpaceId(const CommandContext& command) const
 {
-    if (!command.fence.id.empty())
+    if (!command.space.id.empty())
     {
-        return command.fence.id;
+        return command.space.id;
     }
 
     if (m_context.appCommands)
     {
         const CommandContext active = m_context.appCommands->GetCurrentCommandContext();
-        if (!active.fence.id.empty())
+        if (!active.space.id.empty())
         {
-            return active.fence.id;
+            return active.space.id;
         }
 
-        return m_context.appCommands->GetActiveFenceMetadata().id;
+        return m_context.appCommands->GetActiveSpaceMetadata().id;
     }
 
     return L"";
 }
 
-FenceMetadata ProductivityActionsPlugin::ResolveFence(const CommandContext& command) const
+SpaceMetadata ProductivityActionsPlugin::ResolveSpace(const CommandContext& command) const
 {
-    if (!command.fence.id.empty())
+    if (!command.space.id.empty())
     {
-        return command.fence;
+        return command.space;
     }
 
-    const std::wstring fenceId = ResolveFenceId(command);
-    if (fenceId.empty() || !m_context.appCommands)
+    const std::wstring spaceId = ResolveSpaceId(command);
+    if (spaceId.empty() || !m_context.appCommands)
     {
         return {};
     }
 
-    return m_context.appCommands->GetFenceMetadata(fenceId);
+    return m_context.appCommands->GetSpaceMetadata(spaceId);
 }
 
 bool ProductivityActionsPlugin::GetBool(const std::wstring& key, bool fallback) const
@@ -453,9 +456,9 @@ void ProductivityActionsPlugin::Notify(const std::wstring& message) const
     m_context.diagnostics->Info(L"[ProductivityActions][Notification] " + message);
 }
 
-void ProductivityActionsPlugin::RefreshFenceWithThrottle(const std::wstring& fenceId) const
+void ProductivityActionsPlugin::RefreshSpaceWithThrottle(const std::wstring& spaceId) const
 {
-    if (!m_context.appCommands || fenceId.empty())
+    if (!m_context.appCommands || spaceId.empty())
     {
         return;
     }
@@ -469,7 +472,7 @@ void ProductivityActionsPlugin::RefreshFenceWithThrottle(const std::wstring& fen
     }
 
     m_lastRefreshAt = now;
-    m_context.appCommands->RefreshFence(fenceId);
+    m_context.appCommands->RefreshSpace(spaceId);
 }
 
 int ProductivityActionsPlugin::GetInt(const std::wstring& key, int fallback) const

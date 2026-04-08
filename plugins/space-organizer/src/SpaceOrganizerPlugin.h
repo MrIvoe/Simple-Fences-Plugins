@@ -5,11 +5,11 @@
 #include <chrono>
 #include <filesystem>
 
-// Community plugin: Fence Organizer
-// Provides sorting and cleanup commands for fence contents.
-// Uses command context payloads so actions target the selected fence.
+// Community plugin: Space Organizer
+// Provides sorting and cleanup commands for space contents.
+// Uses command context payloads so actions target the selected space.
 // Capability: commands, menu_contributions, settings_pages
-class FenceOrganizerPlugin final : public IPlugin
+class SpaceOrganizerPlugin final : public IPlugin
 {
 public:
     PluginManifest GetManifest() const override;
@@ -30,7 +30,7 @@ private:
     void HandleArchiveOld(const CommandContext& command) const;
     void HandleMoveLarge(const CommandContext& command) const;
 
-    FenceMetadata ResolveFence(const CommandContext& command) const;
+    SpaceMetadata ResolveSpace(const CommandContext& command) const;
     bool GetBool(const std::wstring& key, const std::wstring& fallback) const;
     int GetInt(const std::wstring& key, int fallback) const;
     std::wstring GetText(const std::wstring& key, const std::wstring& fallback) const;
@@ -40,7 +40,7 @@ private:
     std::wstring GetDefaultMode() const;
     int GetRefreshIntervalSeconds() const;
     void Notify(const std::wstring& message) const;
-    void RefreshFenceWithThrottle(const std::wstring& fenceId) const;
+    void RefreshSpaceWithThrottle(const std::wstring& spaceId) const;
     void LogInfo(const std::wstring& message) const;
     void LogWarn(const std::wstring& message) const;
 

@@ -1,13 +1,13 @@
 # Folder Portal
 
-Create fences backed by existing folders with provider callbacks and health-aware state updates.
+Create Spaces backed by existing folders with provider callbacks and health-aware state updates.
 
 ## Plugin Snapshot
 
 - Folder: `folder-portal`
 - Plugin ID: `community.folder_portal`
 - Version: `1.2.2`
-- Capabilities: `fence_content_provider`, `commands`, `menu_contributions`, `tray_contributions`, `settings_pages`
+- Capabilities: `space_content_provider`, `commands`, `menu_contributions`, `tray_contributions`, `settings_pages`
 
 ## Files
 

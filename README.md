@@ -1,4 +1,4 @@
-# Simple Fences Plugin Hub
+# Simple Spaces Plugin Hub
 
 [![Validate plugin manifests](https://github.com/MrIvoe/Spaces-Plugins/actions/workflows/validate-plugins.yml/badge.svg)](https://github.com/MrIvoe/Spaces-Plugins/actions/workflows/validate-plugins.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -14,8 +14,8 @@ This repository provides:
 
 ## What The Program Offers
 
-SimpleFences + this plugin hub gives you:
-- plugin-based desktop fence extensions
+Spaces + this plugin hub gives you:
+- plugin-based desktop Space extensions
 - content provider plugins (portal/external/network/scripted)
 - settings-page contributions with persisted values
 - tray and desktop-context command extensions

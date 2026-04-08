@@ -10,9 +10,9 @@ PluginManifest TemplatePlugin::GetManifest() const
     manifest.id           = L"community.template_plugin";
     manifest.displayName  = L"Template Plugin";
     manifest.version      = L"0.1.2";
-    manifest.description  = L"Starter template for a SimpleFences community plugin.";
-    manifest.minHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
-    manifest.maxHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
+    manifest.description  = L"Starter template for a SimpleSpaces community plugin.";
+    manifest.minHostApiVersion = SimpleSpacesVersion::kPluginApiVersion;
+    manifest.maxHostApiVersion = SimpleSpacesVersion::kPluginApiVersion;
     manifest.capabilities = {L"settings_pages"};
     return manifest;
 }

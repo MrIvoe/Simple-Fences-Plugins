@@ -1,0 +1,11 @@
+#include "@PLUGIN_HEADER@"
+
+extern "C" __declspec(dllexport) IPlugin* CreatePlugin()
+{
+    return new @PLUGIN_CLASS@();
+}
+
+extern "C" __declspec(dllexport) void DestroyPlugin(IPlugin* plugin)
+{
+    delete plugin;
+}

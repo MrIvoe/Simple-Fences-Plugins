@@ -1,19 +1,19 @@
-# PowerShell Workspace Fence
+# PowerShell Workspace Space
 
-Prototype PowerShell workspace fence with persisted startup, admin, view, and safety settings.
+Prototype PowerShell workspace Space with persisted startup, admin, view, and safety settings.
 
 ## Plugin Snapshot
 
-- Folder: `powershell-fence`
-- Plugin ID: `community.powershell_fence`
+- Folder: `powershell-Space`
+- Plugin ID: `community.powershell_space`
 - Version: `0.2.2`
-- Capabilities: `fence_content_provider`, `settings_pages`
+- Capabilities: `space_content_provider`, `settings_pages`
 
 ## Files
 
 - `plugin.json`
-- `src/PowerShellFencePlugin.h`
-- `src/PowerShellFencePlugin.cpp`
+- `src/PowerShellSpacePlugin.h`
+- `src/PowerShellSpacePlugin.cpp`
 
 ## Host Integration
 

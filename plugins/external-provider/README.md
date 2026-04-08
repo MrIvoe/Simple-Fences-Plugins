@@ -1,4 +1,4 @@
-# External Provider Fences
+# External Provider Spaces
 
 Shows provider-backed virtual item lists from external and generated sources.
 
@@ -7,7 +7,7 @@ Shows provider-backed virtual item lists from external and generated sources.
 - Folder: `external-provider`
 - Plugin ID: `community.external_provider`
 - Version: `1.0.2`
-- Capabilities: `fence_content_provider`, `commands`, `settings_pages`, `tray_contributions`
+- Capabilities: `space_content_provider`, `commands`, `settings_pages`, `tray_contributions`
 
 ## Files
 

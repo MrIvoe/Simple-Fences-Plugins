@@ -30,8 +30,8 @@ $legacyCompatibilityKeys = @(
 $semverPattern = '^\d+\.\d+\.\d+$'
 
 $allowedPermissions = @(
-    'read_fence_metadata',
-    'write_fence_settings',
+    'read_space_metadata',
+    'write_space_settings',
     'read_settings',
     'write_settings',
     'network_access',
@@ -173,7 +173,7 @@ foreach ($file in $pluginFiles)
     {
         $caps = @($json.capabilities)
         $hasSettings = $caps -contains 'settings_pages'
-        $hasHostedContent = ($caps -contains 'fence_content_provider') -or ($caps -contains 'widgets')
+        $hasHostedContent = ($caps -contains 'space_content_provider') -or ($caps -contains 'widgets')
 
         if ($json.PSObject.Properties.Name -contains 'supportsSettingsPage' -and [bool]$json.supportsSettingsPage -ne [bool]$hasSettings)
         {

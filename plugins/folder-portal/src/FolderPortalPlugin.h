@@ -1,13 +1,15 @@
 #pragma once
 
+#include "Models.h"
 #include "extensions/PluginContracts.h"
 
 #include <chrono>
 #include <unordered_map>
+#include <vector>
 
 // Community plugin: Folder Portal
 // Registers a folder_portal content provider and operational settings pages.
-// Capability: fence_content_provider, commands, tray_contributions, settings_pages
+// Capability: space_content_provider, commands, tray_contributions, settings_pages
 class FolderPortalPlugin final : public IPlugin
 {
 public:
@@ -17,15 +19,15 @@ public:
 
 private:
     PluginContext m_context{};
-    mutable std::unordered_map<std::wstring, std::chrono::steady_clock::time_point> m_lastRefreshAtByFence;
+    mutable std::unordered_map<std::wstring, std::chrono::steady_clock::time_point> m_lastRefreshAtBySpace;
 
     void RegisterSettings() const;
     void RegisterMenus() const;
     void RegisterCommands() const;
 
-    std::vector<FenceItem> EnumeratePortalItems(const FenceMetadata& fence) const;
-    bool HandlePortalDrop(const FenceMetadata& fence, const std::vector<std::wstring>& paths) const;
-    bool HandlePortalDelete(const FenceMetadata& fence, const FenceItem& item) const;
+    std::vector<SpaceItem> EnumeratePortalItems(const SpaceMetadata& space) const;
+    bool HandlePortalDrop(const SpaceMetadata& space, const std::vector<std::wstring>& paths) const;
+    bool HandlePortalDelete(const SpaceMetadata& space, const SpaceItem& item) const;
 
     void HandleNewPortal(const CommandContext& command) const;
     void HandleReconnectAll(const CommandContext& command) const;
@@ -37,6 +39,6 @@ private:
     bool GetBool(const std::wstring& key, bool fallback) const;
     int GetInt(const std::wstring& key, int fallback) const;
     void Notify(const std::wstring& message) const;
-    void RefreshFenceWithThrottle(const std::wstring& fenceId) const;
-    void UpdatePortalHealth(const FenceMetadata& fence) const;
+    void RefreshSpaceWithThrottle(const std::wstring& spaceId) const;
+    void UpdatePortalHealth(const SpaceMetadata& space) const;
 };

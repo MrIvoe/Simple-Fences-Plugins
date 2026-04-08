@@ -6,7 +6,7 @@ This repository is the plugin hub for the main app:
 
 ## Architecture
 
-SimpleFences uses a host-owned plugin runtime:
+Spaces uses a host-owned plugin runtime:
 1. The host loads plugin manifests.
 2. Plugins register capabilities.
 3. The host renders UI and persists settings.
@@ -16,9 +16,9 @@ SimpleFences uses a host-owned plugin runtime:
 
 - `commands`: command actions that can be invoked by host routes.
 - `tray_contributions`: plugin commands visible in tray menus.
-- `fence_content_provider`: new fence content types.
+- `space_content_provider`: new Space content types.
 - `appearance`: theme or visual mode related controls.
-- `widgets`: widget-like fence surfaces.
+- `widgets`: widget-like Space surfaces.
 - `desktop_context`: desktop context integrations.
 - `settings_pages`: host-rendered settings pages.
 

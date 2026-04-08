@@ -1,9 +1,9 @@
 {
-  "id": "community.network_drive_fence",
-  "displayName": "Network Drive Fence",
+  "id": "community.network_drive_space",
+  "displayName": "Network Drive Space",
   "version": "1.2.2",
-  "description": "A fence content provider that maps a UNC path or mapped network drive as a browseable folder fence.",
-  "author": "SimpleFences Community",
+  "description": "A space content provider that maps a UNC path or mapped network drive as a browseable folder space.",
+  "author": "SimpleSpaces Community",
   "minHostVersion": "0.0.013",
   "maxHostVersion": "0.1.999",
   "minHostApiVersion": "0.0.012",
@@ -14,14 +14,14 @@
   "icon": "",
   "updateChannelId": "stable",
   "capabilities": [
-    "fence_content_provider",
+    "space_content_provider",
     "settings_pages"
   ],
   "repository": "https://github.com/MrIvoe/Spaces-Plugins",
   "supportsHostedSummaryPanel": true,
   "hostedSummaryPanel": {
-    "panelId": "community.network_drive_fence.summary",
-    "title": "Network Drive Fence Overview",
+    "panelId": "community.network_drive_space.summary",
+    "title": "Network Drive Space Overview",
     "schemaVersion": "1",
     "layout": "cards",
     "themeTokenNamespace": "win32_theme_system",

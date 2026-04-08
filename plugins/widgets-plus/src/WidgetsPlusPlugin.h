@@ -15,7 +15,7 @@ public:
 private:
     PluginContext m_context{};
     mutable bool m_paused = false;
-    mutable std::unordered_map<std::wstring, std::chrono::steady_clock::time_point> m_lastRefreshAtByFence;
+    mutable std::unordered_map<std::wstring, std::chrono::steady_clock::time_point> m_lastRefreshAtBySpace;
 
     void RegisterSettings() const;
     void RegisterMenus() const;
@@ -31,6 +31,6 @@ private:
     int GetInt(const std::wstring& key, int fallback) const;
     std::wstring GetString(const std::wstring& key, const std::wstring& fallback) const;
     void Notify(const std::wstring& message) const;
-    void RefreshFenceWithThrottle(const std::wstring& fenceId) const;
+    void RefreshSpaceWithThrottle(const std::wstring& spaceId) const;
     void LogInfo(const std::wstring& message) const;
 };

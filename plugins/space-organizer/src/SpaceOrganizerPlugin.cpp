@@ -1,5 +1,7 @@
-#include "FenceOrganizerPlugin.h"
+#include "SpaceOrganizerPlugin.h"
 
+#include "core/CommandDispatcher.h"
+#include "core/Diagnostics.h"
 #include "../../shared/SampleFsHelpers.h"
 #include "extensions/MenuContributionRegistry.h"
 #include "extensions/PluginSettingsRegistry.h"
@@ -13,27 +15,27 @@
 
 namespace fs = std::filesystem;
 
-PluginManifest FenceOrganizerPlugin::GetManifest() const
+PluginManifest SpaceOrganizerPlugin::GetManifest() const
 {
     PluginManifest m;
-    m.id = L"community.fence_organizer";
-    m.displayName = L"Fence Organizer";
+    m.id = L"community.space_organizer";
+    m.displayName = L"Space Organizer";
     m.version = L"1.2.2";
-    m.description = L"Sorting and cleanup toolkit for fence contents using context-aware commands.";
-    m.minHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
-    m.maxHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
+    m.description = L"Sorting and cleanup toolkit for space contents using context-aware commands.";
+    m.minHostApiVersion = SimpleSpacesVersion::kPluginApiVersion;
+    m.maxHostApiVersion = SimpleSpacesVersion::kPluginApiVersion;
     m.capabilities = {L"commands", L"menu_contributions", L"settings_pages"};
     return m;
 }
 
-bool FenceOrganizerPlugin::Initialize(const PluginContext& context)
+bool SpaceOrganizerPlugin::Initialize(const PluginContext& context)
 {
     m_context = context;
     if (!m_context.commandDispatcher || !m_context.settingsRegistry || !m_context.appCommands)
     {
         if (m_context.diagnostics)
         {
-            m_context.diagnostics->Error(L"FenceOrganizerPlugin: Missing required host services");
+            m_context.diagnostics->Error(L"SpaceOrganizerPlugin: Missing required host services");
         }
         return false;
     }
@@ -45,20 +47,20 @@ bool FenceOrganizerPlugin::Initialize(const PluginContext& context)
     return true;
 }
 
-void FenceOrganizerPlugin::Shutdown()
+void SpaceOrganizerPlugin::Shutdown()
 {
     LogInfo(L"Shutdown");
 }
 
-void FenceOrganizerPlugin::RegisterSettings() const
+void SpaceOrganizerPlugin::RegisterSettings() const
 {
     PluginSettingsPage page;
-    page.pluginId = L"community.fence_organizer";
+    page.pluginId = L"community.space_organizer";
     page.pageId = L"organizer.actions";
-    page.title = L"Fence Organizer";
+    page.title = L"Space Organizer";
     page.order = 30;
 
-    page.fields.push_back(SettingsFieldDescriptor{L"plugin.enabled", L"Enable plugin", L"Master toggle for Fence Organizer behavior.", SettingsFieldType::Bool, L"true", {}, 1});
+    page.fields.push_back(SettingsFieldDescriptor{L"plugin.enabled", L"Enable plugin", L"Master toggle for Space Organizer behavior.", SettingsFieldType::Bool, L"true", {}, 1});
     page.fields.push_back(SettingsFieldDescriptor{L"plugin.log_actions", L"Log actions", L"Write organizer operations to diagnostics.", SettingsFieldType::Bool, L"true", {}, 2});
     PluginUiPatterns::AppendBaselineSettingsFields(page.fields, 1, 120, false);
 
@@ -187,21 +189,21 @@ void FenceOrganizerPlugin::RegisterSettings() const
     m_context.settingsRegistry->RegisterPage(std::move(page));
 }
 
-void FenceOrganizerPlugin::RegisterMenus() const
+void SpaceOrganizerPlugin::RegisterMenus() const
 {
     if (!m_context.menuRegistry)
     {
         return;
     }
 
-    m_context.menuRegistry->Register(MenuContribution{MenuSurface::FenceContext, L"Organize by File Type", L"organizer.by_type", 500, true});
-    m_context.menuRegistry->Register(MenuContribution{MenuSurface::FenceContext, L"Flatten Organized Folders", L"organizer.flatten", 510, false});
-    m_context.menuRegistry->Register(MenuContribution{MenuSurface::FenceContext, L"Remove Empty Subfolders", L"organizer.cleanup_empty", 520, false});
-    m_context.menuRegistry->Register(MenuContribution{MenuSurface::FenceContext, L"Archive Old Files", L"organizer.archive_old", 530, false});
-    m_context.menuRegistry->Register(MenuContribution{MenuSurface::FenceContext, L"Move Large Files", L"organizer.move_large", 540, false});
+    m_context.menuRegistry->Register(MenuContribution{MenuSurface::SpaceContext, L"Organize by File Type", L"organizer.by_type", 500, true});
+    m_context.menuRegistry->Register(MenuContribution{MenuSurface::SpaceContext, L"Flatten Organized Folders", L"organizer.flatten", 510, false});
+    m_context.menuRegistry->Register(MenuContribution{MenuSurface::SpaceContext, L"Remove Empty Subfolders", L"organizer.cleanup_empty", 520, false});
+    m_context.menuRegistry->Register(MenuContribution{MenuSurface::SpaceContext, L"Archive Old Files", L"organizer.archive_old", 530, false});
+    m_context.menuRegistry->Register(MenuContribution{MenuSurface::SpaceContext, L"Move Large Files", L"organizer.move_large", 540, false});
 }
 
-void FenceOrganizerPlugin::RegisterCommands() const
+void SpaceOrganizerPlugin::RegisterCommands() const
 {
     m_context.commandDispatcher->RegisterCommand(L"organizer.by_type", [this](const CommandContext& command) {
         HandleOrganizeByType(command);
@@ -220,22 +222,22 @@ void FenceOrganizerPlugin::RegisterCommands() const
     });
 }
 
-FenceMetadata FenceOrganizerPlugin::ResolveFence(const CommandContext& command) const
+SpaceMetadata SpaceOrganizerPlugin::ResolveSpace(const CommandContext& command) const
 {
-    if (!command.fence.id.empty())
+    if (!command.space.id.empty())
     {
-        return command.fence;
+        return command.space;
     }
 
     if (m_context.appCommands)
     {
-        return m_context.appCommands->GetCurrentCommandContext().fence;
+        return m_context.appCommands->GetCurrentCommandContext().space;
     }
 
     return {};
 }
 
-bool FenceOrganizerPlugin::GetBool(const std::wstring& key, const std::wstring& fallback) const
+bool SpaceOrganizerPlugin::GetBool(const std::wstring& key, const std::wstring& fallback) const
 {
     if (!m_context.settingsRegistry)
     {
@@ -245,7 +247,7 @@ bool FenceOrganizerPlugin::GetBool(const std::wstring& key, const std::wstring& 
     return m_context.settingsRegistry->GetValue(key, fallback) == L"true";
 }
 
-int FenceOrganizerPlugin::GetInt(const std::wstring& key, int fallback) const
+int SpaceOrganizerPlugin::GetInt(const std::wstring& key, int fallback) const
 {
     if (!m_context.settingsRegistry)
     {
@@ -263,7 +265,7 @@ int FenceOrganizerPlugin::GetInt(const std::wstring& key, int fallback) const
     }
 }
 
-std::wstring FenceOrganizerPlugin::GetText(const std::wstring& key, const std::wstring& fallback) const
+std::wstring SpaceOrganizerPlugin::GetText(const std::wstring& key, const std::wstring& fallback) const
 {
     if (!m_context.settingsRegistry)
     {
@@ -273,27 +275,27 @@ std::wstring FenceOrganizerPlugin::GetText(const std::wstring& key, const std::w
     return m_context.settingsRegistry->GetValue(key, fallback);
 }
 
-bool FenceOrganizerPlugin::IsPluginEnabled() const
+bool SpaceOrganizerPlugin::IsPluginEnabled() const
 {
     return GetBool(L"plugin.enabled", L"true");
 }
 
-bool FenceOrganizerPlugin::ShouldLogActions() const
+bool SpaceOrganizerPlugin::ShouldLogActions() const
 {
     return GetBool(L"plugin.log_actions", L"true");
 }
 
-bool FenceOrganizerPlugin::IsSafeModeEnabled() const
+bool SpaceOrganizerPlugin::IsSafeModeEnabled() const
 {
     return GetBool(L"plugin.safe_mode", L"true");
 }
 
-std::wstring FenceOrganizerPlugin::GetDefaultMode() const
+std::wstring SpaceOrganizerPlugin::GetDefaultMode() const
 {
     return GetText(L"plugin.default_mode", L"balanced");
 }
 
-int FenceOrganizerPlugin::GetRefreshIntervalSeconds() const
+int SpaceOrganizerPlugin::GetRefreshIntervalSeconds() const
 {
     int seconds = GetInt(L"plugin.refresh_interval_seconds", 120);
     if (seconds < 1)
@@ -303,19 +305,19 @@ int FenceOrganizerPlugin::GetRefreshIntervalSeconds() const
     return seconds;
 }
 
-void FenceOrganizerPlugin::Notify(const std::wstring& message) const
+void SpaceOrganizerPlugin::Notify(const std::wstring& message) const
 {
     if (!GetBool(L"plugin.show_notifications", L"false") || !m_context.diagnostics)
     {
         return;
     }
 
-    m_context.diagnostics->Info(L"[FenceOrganizer][Notification] " + message);
+    m_context.diagnostics->Info(L"[SpaceOrganizer][Notification] " + message);
 }
 
-void FenceOrganizerPlugin::RefreshFenceWithThrottle(const std::wstring& fenceId) const
+void SpaceOrganizerPlugin::RefreshSpaceWithThrottle(const std::wstring& spaceId) const
 {
-    if (!m_context.appCommands || fenceId.empty())
+    if (!m_context.appCommands || spaceId.empty())
     {
         return;
     }
@@ -329,26 +331,26 @@ void FenceOrganizerPlugin::RefreshFenceWithThrottle(const std::wstring& fenceId)
     }
 
     m_lastRefreshAt = now;
-    m_context.appCommands->RefreshFence(fenceId);
+    m_context.appCommands->RefreshSpace(spaceId);
 }
 
-void FenceOrganizerPlugin::LogInfo(const std::wstring& message) const
+void SpaceOrganizerPlugin::LogInfo(const std::wstring& message) const
 {
     if (m_context.diagnostics && ShouldLogActions())
     {
-        m_context.diagnostics->Info(L"[FenceOrganizer] " + message);
+        m_context.diagnostics->Info(L"[SpaceOrganizer] " + message);
     }
 }
 
-void FenceOrganizerPlugin::LogWarn(const std::wstring& message) const
+void SpaceOrganizerPlugin::LogWarn(const std::wstring& message) const
 {
     if (m_context.diagnostics)
     {
-        m_context.diagnostics->Warn(L"[FenceOrganizer] " + message);
+        m_context.diagnostics->Warn(L"[SpaceOrganizer] " + message);
     }
 }
 
-std::wstring FenceOrganizerPlugin::SanitizeExtension(const fs::path& path)
+std::wstring SpaceOrganizerPlugin::SanitizeExtension(const fs::path& path)
 {
     std::wstring ext = path.extension().wstring();
     if (ext.empty())
@@ -366,17 +368,17 @@ std::wstring FenceOrganizerPlugin::SanitizeExtension(const fs::path& path)
     return ext.empty() ? L"no_extension" : ext;
 }
 
-void FenceOrganizerPlugin::HandleOrganizeByType(const CommandContext& command) const
+void SpaceOrganizerPlugin::HandleOrganizeByType(const CommandContext& command) const
 {
     if (!IsPluginEnabled())
     {
         return;
     }
 
-    const FenceMetadata fence = ResolveFence(command);
-    if (fence.id.empty() || fence.backingFolderPath.empty())
+    const SpaceMetadata space = ResolveSpace(command);
+    if (space.id.empty() || space.backingFolderPath.empty())
     {
-        LogWarn(L"No fence context available for organize action.");
+        LogWarn(L"No space context available for organize action.");
         return;
     }
 
@@ -392,7 +394,7 @@ void FenceOrganizerPlugin::HandleOrganizeByType(const CommandContext& command) c
     size_t skipped = 0;
     try
     {
-        const fs::path root(fence.backingFolderPath);
+        const fs::path root(space.backingFolderPath);
         for (const auto& entry : fs::directory_iterator(root))
         {
             if (!entry.is_regular_file())
@@ -418,7 +420,7 @@ void FenceOrganizerPlugin::HandleOrganizeByType(const CommandContext& command) c
             ++moved;
         }
 
-        RefreshFenceWithThrottle(fence.id);
+        RefreshSpaceWithThrottle(space.id);
         LogInfo(L"Organize by type moved " + std::to_wstring(moved) + L" item(s), skipped " + std::to_wstring(skipped) + L".");
         Notify(L"Organize by type completed.");
     }
@@ -428,17 +430,17 @@ void FenceOrganizerPlugin::HandleOrganizeByType(const CommandContext& command) c
     }
 }
 
-void FenceOrganizerPlugin::HandleFlatten(const CommandContext& command) const
+void SpaceOrganizerPlugin::HandleFlatten(const CommandContext& command) const
 {
     if (!IsPluginEnabled())
     {
         return;
     }
 
-    const FenceMetadata fence = ResolveFence(command);
-    if (fence.id.empty() || fence.backingFolderPath.empty())
+    const SpaceMetadata space = ResolveSpace(command);
+    if (space.id.empty() || space.backingFolderPath.empty())
     {
-        LogWarn(L"No fence context available for flatten action.");
+        LogWarn(L"No space context available for flatten action.");
         return;
     }
 
@@ -450,7 +452,7 @@ void FenceOrganizerPlugin::HandleFlatten(const CommandContext& command) const
     size_t moved = 0;
     try
     {
-        const fs::path root(fence.backingFolderPath);
+        const fs::path root(space.backingFolderPath);
         for (const auto& dirEntry : fs::directory_iterator(root))
         {
             if (!dirEntry.is_directory())
@@ -490,7 +492,7 @@ void FenceOrganizerPlugin::HandleFlatten(const CommandContext& command) const
             }
         }
 
-        RefreshFenceWithThrottle(fence.id);
+        RefreshSpaceWithThrottle(space.id);
         LogInfo(L"Flatten moved " + std::to_wstring(moved) + L" item(s).");
         Notify(L"Flatten organized folders completed.");
     }
@@ -500,17 +502,17 @@ void FenceOrganizerPlugin::HandleFlatten(const CommandContext& command) const
     }
 }
 
-void FenceOrganizerPlugin::HandleCleanupEmpty(const CommandContext& command) const
+void SpaceOrganizerPlugin::HandleCleanupEmpty(const CommandContext& command) const
 {
     if (!IsPluginEnabled())
     {
         return;
     }
 
-    const FenceMetadata fence = ResolveFence(command);
-    if (fence.id.empty() || fence.backingFolderPath.empty())
+    const SpaceMetadata space = ResolveSpace(command);
+    if (space.id.empty() || space.backingFolderPath.empty())
     {
-        LogWarn(L"No fence context available for cleanup action.");
+        LogWarn(L"No space context available for cleanup action.");
         return;
     }
 
@@ -518,7 +520,7 @@ void FenceOrganizerPlugin::HandleCleanupEmpty(const CommandContext& command) con
     std::error_code ec;
     try
     {
-        const fs::path root(fence.backingFolderPath);
+        const fs::path root(space.backingFolderPath);
         for (const auto& entry : fs::directory_iterator(root))
         {
             if (entry.is_directory() && fs::is_empty(entry.path(), ec) && !ec)
@@ -532,7 +534,7 @@ void FenceOrganizerPlugin::HandleCleanupEmpty(const CommandContext& command) con
             ec.clear();
         }
 
-        RefreshFenceWithThrottle(fence.id);
+        RefreshSpaceWithThrottle(space.id);
         LogInfo(L"Cleanup removed " + std::to_wstring(removed) + L" empty folder(s).");
         Notify(L"Cleanup removed empty folders.");
     }
@@ -542,17 +544,17 @@ void FenceOrganizerPlugin::HandleCleanupEmpty(const CommandContext& command) con
     }
 }
 
-void FenceOrganizerPlugin::HandleArchiveOld(const CommandContext& command) const
+void SpaceOrganizerPlugin::HandleArchiveOld(const CommandContext& command) const
 {
     if (!IsPluginEnabled())
     {
         return;
     }
 
-    const FenceMetadata fence = ResolveFence(command);
-    if (fence.id.empty() || fence.backingFolderPath.empty())
+    const SpaceMetadata space = ResolveSpace(command);
+    if (space.id.empty() || space.backingFolderPath.empty())
     {
-        LogWarn(L"No fence context available for archive action.");
+        LogWarn(L"No space context available for archive action.");
         return;
     }
 
@@ -587,7 +589,7 @@ void FenceOrganizerPlugin::HandleArchiveOld(const CommandContext& command) const
     size_t moved = 0;
     try
     {
-        const fs::path root(fence.backingFolderPath);
+        const fs::path root(space.backingFolderPath);
         const fs::path archiveFolder = root / archiveFolderName;
         fs::create_directories(archiveFolder);
 
@@ -607,7 +609,7 @@ void FenceOrganizerPlugin::HandleArchiveOld(const CommandContext& command) const
             }
         }
 
-        RefreshFenceWithThrottle(fence.id);
+        RefreshSpaceWithThrottle(space.id);
         LogInfo(L"Archived " + std::to_wstring(moved) + L" old file(s).");
         Notify(L"Archive old files completed.");
     }
@@ -617,17 +619,17 @@ void FenceOrganizerPlugin::HandleArchiveOld(const CommandContext& command) const
     }
 }
 
-void FenceOrganizerPlugin::HandleMoveLarge(const CommandContext& command) const
+void SpaceOrganizerPlugin::HandleMoveLarge(const CommandContext& command) const
 {
     if (!IsPluginEnabled())
     {
         return;
     }
 
-    const FenceMetadata fence = ResolveFence(command);
-    if (fence.id.empty() || fence.backingFolderPath.empty())
+    const SpaceMetadata space = ResolveSpace(command);
+    if (space.id.empty() || space.backingFolderPath.empty())
     {
-        LogWarn(L"No fence context available for large-file action.");
+        LogWarn(L"No space context available for large-file action.");
         return;
     }
 
@@ -662,7 +664,7 @@ void FenceOrganizerPlugin::HandleMoveLarge(const CommandContext& command) const
     size_t moved = 0;
     try
     {
-        const fs::path root(fence.backingFolderPath);
+        const fs::path root(space.backingFolderPath);
         const fs::path largeFolder = root / largeFolderName;
         fs::create_directories(largeFolder);
 
@@ -682,7 +684,7 @@ void FenceOrganizerPlugin::HandleMoveLarge(const CommandContext& command) const
             }
         }
 
-        RefreshFenceWithThrottle(fence.id);
+        RefreshSpaceWithThrottle(space.id);
         LogInfo(L"Moved " + std::to_wstring(moved) + L" large file(s).");
         Notify(L"Move large files completed.");
     }

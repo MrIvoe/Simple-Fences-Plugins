@@ -1,5 +1,7 @@
 #include "ContextActionsPlugin.h"
 
+#include "core/CommandDispatcher.h"
+#include "core/Diagnostics.h"
 #include "extensions/MenuContributionRegistry.h"
 #include "extensions/PluginSettingsRegistry.h"
 #include "extensions/SettingsSchema.h"
@@ -13,9 +15,9 @@ PluginManifest ContextActionsPlugin::GetManifest() const
     m.id = L"community.context_actions";
     m.displayName = L"Context Actions";
     m.version = L"1.2.2";
-    m.description = L"Context-aware right-click actions for desktop, fence, and item workflows.";
-    m.minHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
-    m.maxHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
+    m.description = L"Context-aware right-click actions for desktop, space, and item workflows.";
+    m.minHostApiVersion = SimpleSpacesVersion::kPluginApiVersion;
+    m.maxHostApiVersion = SimpleSpacesVersion::kPluginApiVersion;
     m.capabilities = {L"commands", L"menu_contributions", L"desktop_context", L"settings_pages"};
     return m;
 }
@@ -63,8 +65,8 @@ void ContextActionsPlugin::RegisterSettings() const
     page.fields.push_back(SettingsFieldDescriptor{L"context.compact_mode", L"Compact mode", L"Prefer compact layout for plugin context actions.", SettingsFieldType::Bool, L"true", {}, 30});
     page.fields.push_back(SettingsFieldDescriptor{L"context.group_under_submenu", L"Group under submenu", L"Group actions under a plugin submenu where supported.", SettingsFieldType::Bool, L"true", {}, 40});
     page.fields.push_back(SettingsFieldDescriptor{L"context.show_desktop_background", L"Show on desktop background", L"Show context actions on desktop context menus.", SettingsFieldType::Bool, L"true", {}, 50});
-    page.fields.push_back(SettingsFieldDescriptor{L"context.show_fence_background", L"Show on fence background", L"Show context actions on fence background menus.", SettingsFieldType::Bool, L"true", {}, 60});
-    page.fields.push_back(SettingsFieldDescriptor{L"context.show_fence_items", L"Show on fence items", L"Show context actions on fence item menus.", SettingsFieldType::Bool, L"true", {}, 70});
+    page.fields.push_back(SettingsFieldDescriptor{L"context.show_space_background", L"Show on space background", L"Show context actions on space background menus.", SettingsFieldType::Bool, L"true", {}, 60});
+    page.fields.push_back(SettingsFieldDescriptor{L"context.show_space_items", L"Show on space items", L"Show context actions on space item menus.", SettingsFieldType::Bool, L"true", {}, 70});
 
     page.fields.push_back(SettingsFieldDescriptor{L"context.max_visible_actions", L"Max visible actions", L"Maximum number of plugin actions shown directly in the menu before overflowing to a submenu.", SettingsFieldType::Int, L"8", {}, 80});
     page.fields.push_back(SettingsFieldDescriptor{L"context.show_separator_lines", L"Show separator lines", L"Show divider lines between groups of context actions.", SettingsFieldType::Bool, L"true", {}, 90});
@@ -84,9 +86,9 @@ void ContextActionsPlugin::RegisterMenus() const
     }
 
     m_context.menuRegistry->Register(MenuContribution{MenuSurface::DesktopContext, L"New Folder Portal Here", L"context.new_folder_portal_here", 400, false});
-    m_context.menuRegistry->Register(MenuContribution{MenuSurface::DesktopContext, L"Sort This Fence", L"context.sort_this_fence", 410, false});
-    m_context.menuRegistry->Register(MenuContribution{MenuSurface::FenceContext, L"Clean Up This Fence", L"context.cleanup_this_fence", 420, false});
-    m_context.menuRegistry->Register(MenuContribution{MenuSurface::FenceContext, L"Apply Focus Visual Mode", L"context.apply_theme_this_fence", 430, false});
+    m_context.menuRegistry->Register(MenuContribution{MenuSurface::DesktopContext, L"Sort This Space", L"context.sort_this_space", 410, false});
+    m_context.menuRegistry->Register(MenuContribution{MenuSurface::SpaceContext, L"Clean Up This Space", L"context.cleanup_this_space", 420, false});
+    m_context.menuRegistry->Register(MenuContribution{MenuSurface::SpaceContext, L"Apply Focus Visual Mode", L"context.apply_theme_this_space", 430, false});
     m_context.menuRegistry->Register(MenuContribution{MenuSurface::ItemContext, L"Pin Selected", L"context.pin_selected", 435, false});
     m_context.menuRegistry->Register(MenuContribution{MenuSurface::ItemContext, L"Refresh Provider", L"context.refresh_provider", 440, false});
     m_context.menuRegistry->Register(MenuContribution{MenuSurface::ItemContext, L"Copy Item Metadata", L"context.copy_item_metadata", 450, false});
@@ -101,9 +103,9 @@ void ContextActionsPlugin::RegisterCommands() const
     }
 
     m_context.commandDispatcher->RegisterCommand(L"context.new_folder_portal_here", [this](const CommandContext& command) { HandleNewFolderPortalHere(command); });
-    m_context.commandDispatcher->RegisterCommand(L"context.sort_this_fence", [this](const CommandContext& command) { HandleSortThisFence(command); });
-    m_context.commandDispatcher->RegisterCommand(L"context.cleanup_this_fence", [this](const CommandContext& command) { HandleCleanupThisFence(command); });
-    m_context.commandDispatcher->RegisterCommand(L"context.apply_theme_this_fence", [this](const CommandContext& command) { HandleApplyThemeThisFence(command); });
+    m_context.commandDispatcher->RegisterCommand(L"context.sort_this_space", [this](const CommandContext& command) { HandleSortThisSpace(command); });
+    m_context.commandDispatcher->RegisterCommand(L"context.cleanup_this_space", [this](const CommandContext& command) { HandleCleanupThisSpace(command); });
+    m_context.commandDispatcher->RegisterCommand(L"context.apply_theme_this_space", [this](const CommandContext& command) { HandleApplyThemeThisSpace(command); });
     m_context.commandDispatcher->RegisterCommand(L"context.pin_selected", [this](const CommandContext& command) { HandlePinSelected(command); });
     m_context.commandDispatcher->RegisterCommand(L"context.refresh_provider", [this](const CommandContext& command) { HandleRefreshProvider(command); });
     m_context.commandDispatcher->RegisterCommand(L"context.copy_item_metadata", [this](const CommandContext& command) { HandleCopyItemMetadata(command); });
@@ -133,7 +135,7 @@ void ContextActionsPlugin::HandleNewFolderPortalHere(const CommandContext& comma
     Notify(L"New Folder Portal requested.");
 }
 
-void ContextActionsPlugin::HandleSortThisFence(const CommandContext& command) const
+void ContextActionsPlugin::HandleSortThisSpace(const CommandContext& command) const
 {
     if (!GetBool(L"context.enabled", true))
     {
@@ -145,9 +147,9 @@ void ContextActionsPlugin::HandleSortThisFence(const CommandContext& command) co
         return;
     }
 
-    if (command.fence.id.empty())
+    if (command.space.id.empty())
     {
-        LogInfo(L"sort_this_fence skipped: no fence context payload");
+        LogInfo(L"sort_this_space skipped: no space context payload");
         return;
     }
 
@@ -155,14 +157,14 @@ void ContextActionsPlugin::HandleSortThisFence(const CommandContext& command) co
     forward.commandId = L"organizer.by_type";
     if (!m_context.commandDispatcher->Dispatch(L"organizer.by_type", forward))
     {
-        LogInfo(L"sort_this_fence could not dispatch organizer.by_type");
+        LogInfo(L"sort_this_space could not dispatch organizer.by_type");
         return;
     }
 
-    Notify(L"Sort This Fence requested.");
+    Notify(L"Sort This Space requested.");
 }
 
-void ContextActionsPlugin::HandleCleanupThisFence(const CommandContext& command) const
+void ContextActionsPlugin::HandleCleanupThisSpace(const CommandContext& command) const
 {
     if (!GetBool(L"context.enabled", true))
     {
@@ -174,9 +176,9 @@ void ContextActionsPlugin::HandleCleanupThisFence(const CommandContext& command)
         return;
     }
 
-    if (command.fence.id.empty())
+    if (command.space.id.empty())
     {
-        LogInfo(L"cleanup_this_fence skipped: no fence context payload");
+        LogInfo(L"cleanup_this_space skipped: no space context payload");
         return;
     }
 
@@ -184,14 +186,14 @@ void ContextActionsPlugin::HandleCleanupThisFence(const CommandContext& command)
     forward.commandId = L"organizer.cleanup_empty";
     if (!m_context.commandDispatcher->Dispatch(L"organizer.cleanup_empty", forward))
     {
-        LogInfo(L"cleanup_this_fence could not dispatch organizer.cleanup_empty");
+        LogInfo(L"cleanup_this_space could not dispatch organizer.cleanup_empty");
         return;
     }
 
-    Notify(L"Clean Up This Fence requested.");
+    Notify(L"Clean Up This Space requested.");
 }
 
-void ContextActionsPlugin::HandleApplyThemeThisFence(const CommandContext& command) const
+void ContextActionsPlugin::HandleApplyThemeThisSpace(const CommandContext& command) const
 {
     if (!GetBool(L"context.enabled", true))
     {
@@ -203,9 +205,9 @@ void ContextActionsPlugin::HandleApplyThemeThisFence(const CommandContext& comma
         return;
     }
 
-    if (command.fence.id.empty())
+    if (command.space.id.empty())
     {
-        LogInfo(L"apply_theme_this_fence skipped: no fence context payload");
+        LogInfo(L"apply_theme_this_space skipped: no space context payload");
         return;
     }
 
@@ -213,7 +215,7 @@ void ContextActionsPlugin::HandleApplyThemeThisFence(const CommandContext& comma
     forward.commandId = L"appearance.mode.focus";
     if (!m_context.commandDispatcher->Dispatch(L"appearance.mode.focus", forward))
     {
-        LogInfo(L"apply_theme_this_fence could not dispatch appearance.mode.focus");
+        LogInfo(L"apply_theme_this_space could not dispatch appearance.mode.focus");
         return;
     }
 
@@ -232,14 +234,14 @@ void ContextActionsPlugin::HandleRefreshProvider(const CommandContext& command) 
         return;
     }
 
-    if (command.fence.id.empty())
+    if (command.space.id.empty())
     {
-        LogInfo(L"refresh_provider skipped: no fence context payload");
+        LogInfo(L"refresh_provider skipped: no space context payload");
         return;
     }
 
-    RefreshFenceWithThrottle(command.fence.id);
-    LogInfo(L"refresh_provider refreshed fence: " + command.fence.id);
+    RefreshSpaceWithThrottle(command.space.id);
+    LogInfo(L"refresh_provider refreshed space: " + command.space.id);
     Notify(L"Refresh Provider requested.");
 }
 
@@ -329,9 +331,9 @@ void ContextActionsPlugin::Notify(const std::wstring& message) const
     m_context.diagnostics->Info(L"[ContextActions][Notification] " + message);
 }
 
-void ContextActionsPlugin::RefreshFenceWithThrottle(const std::wstring& fenceId) const
+void ContextActionsPlugin::RefreshSpaceWithThrottle(const std::wstring& spaceId) const
 {
-    if (!m_context.appCommands || fenceId.empty())
+    if (!m_context.appCommands || spaceId.empty())
     {
         return;
     }
@@ -350,7 +352,7 @@ void ContextActionsPlugin::RefreshFenceWithThrottle(const std::wstring& fenceId)
     }
 
     m_lastRefreshAt = now;
-    m_context.appCommands->RefreshFence(fenceId);
+    m_context.appCommands->RefreshSpace(spaceId);
 }
 
 void ContextActionsPlugin::LogInfo(const std::wstring& message) const

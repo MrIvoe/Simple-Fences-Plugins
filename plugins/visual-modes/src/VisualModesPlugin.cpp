@@ -1,5 +1,7 @@
 #include "VisualModesPlugin.h"
 
+#include "core/CommandDispatcher.h"
+#include "core/Diagnostics.h"
 #include "extensions/MenuContributionRegistry.h"
 #include "extensions/PluginSettingsRegistry.h"
 #include "extensions/SettingsSchema.h"
@@ -29,9 +31,9 @@ namespace
         return themeId;
     }
 
-    const std::vector<std::pair<std::wstring, std::wstring>>& Win32ThemeOptions()
+    const std::vector<SettingsEnumOption>& Win32ThemeOptions()
     {
-        static const std::vector<std::pair<std::wstring, std::wstring>> options = {
+        static const std::vector<SettingsEnumOption> options = {
             {L"amber-terminal", L"Amber Terminal"},
             {L"arctic-glass", L"Arctic Glass"},
             {L"aurora-light", L"Aurora Light"},
@@ -89,9 +91,9 @@ namespace
         const std::wstring normalized = NormalizeWin32ThemeId(themeKey);
         for (const auto& option : Win32ThemeOptions())
         {
-            if (option.first == normalized)
+            if (option.value == normalized)
             {
-                return option.second;
+                return option.label;
             }
         }
 
@@ -105,9 +107,9 @@ PluginManifest VisualModesPlugin::GetManifest() const
     m.id = L"community.visual_modes";
     m.displayName = L"Visual Modes";
     m.version = L"1.1.6";
-    m.description = L"Applies global or per-fence visual behavior presets.";
-    m.minHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
-    m.maxHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
+    m.description = L"Applies global or per-space visual behavior presets.";
+    m.minHostApiVersion = SimpleSpacesVersion::kPluginApiVersion;
+    m.maxHostApiVersion = SimpleSpacesVersion::kPluginApiVersion;
     m.capabilities = {L"appearance", L"commands", L"tray_contributions", L"settings_pages"};
     return m;
 }
@@ -160,8 +162,8 @@ void VisualModesPlugin::RegisterSettings() const
         Win32ThemeOptions(),
         10});
 
-    page.fields.push_back(SettingsFieldDescriptor{L"theme.apply_global", L"Apply globally", L"Apply preset actions to all fences by default.", SettingsFieldType::Bool, L"true", {}, 20});
-    page.fields.push_back(SettingsFieldDescriptor{L"theme.allow_per_fence_override", L"Allow per-fence override", L"Allow apply/reset commands to target one fence.", SettingsFieldType::Bool, L"true", {}, 30});
+    page.fields.push_back(SettingsFieldDescriptor{L"theme.apply_global", L"Apply globally", L"Apply preset actions to all spaces by default.", SettingsFieldType::Bool, L"true", {}, 20});
+    page.fields.push_back(SettingsFieldDescriptor{L"theme.allow_per_space_override", L"Allow per-space override", L"Allow apply/reset commands to target one space.", SettingsFieldType::Bool, L"true", {}, 30});
     page.fields.push_back(SettingsFieldDescriptor{L"theme.source", L"Theme source", L"Theme catalog source used by this plugin.", SettingsFieldType::Enum, L"win32_theme_system", {{L"win32_theme_system", L"Win32ThemeSystem"}}, 35});
     page.fields.push_back(SettingsFieldDescriptor{L"theme.win32.theme_id", L"Win32 theme ID", L"Canonical Win32ThemeSystem theme family identifier (kebab-case).", SettingsFieldType::String, L"graphite-office", {}, 36});
     page.fields.push_back(SettingsFieldDescriptor{L"theme.win32.display_name", L"Win32 theme display name", L"Normalized Win32ThemeSystem display name for host-side theme bridge integration.", SettingsFieldType::String, L"Graphite Office", {}, 37});
@@ -171,7 +173,7 @@ void VisualModesPlugin::RegisterSettings() const
     page.fields.push_back(SettingsFieldDescriptor{L"theme.colors.border", L"Border color", L"Custom preset border color (#RRGGBB). Leave blank to use host resources.", SettingsFieldType::String, L"", {}, 60});
     page.fields.push_back(SettingsFieldDescriptor{L"theme.colors.text", L"Text color", L"Custom preset text color (#RRGGBB). Leave blank to use host resources.", SettingsFieldType::String, L"", {}, 70});
     page.fields.push_back(SettingsFieldDescriptor{L"theme.effects.transparency", L"Enable transparency", L"Enable transparent visual treatment when supported.", SettingsFieldType::Bool, L"false", {}, 80});
-    page.fields.push_back(SettingsFieldDescriptor{L"theme.keep_title_bar_visible", L"Keep title bar visible", L"Prevent presets from combining rollup and transparency in a way that can fully hide the fence.", SettingsFieldType::Bool, L"true", {}, 85});
+    page.fields.push_back(SettingsFieldDescriptor{L"theme.keep_title_bar_visible", L"Keep title bar visible", L"Prevent presets from combining rollup and transparency in a way that can fully hide the space.", SettingsFieldType::Bool, L"true", {}, 85});
     page.fields.push_back(SettingsFieldDescriptor{L"theme.effects.opacity_percent", L"Opacity percent", L"Window opacity percent for custom and glass presets.", SettingsFieldType::Int, L"88", {}, 90});
     page.fields.push_back(SettingsFieldDescriptor{L"theme.effects.blur", L"Enable blur", L"Enable blur when host compositor supports it.", SettingsFieldType::Bool, L"true", {}, 100});
     page.fields.push_back(SettingsFieldDescriptor{L"theme.effects.corner_radius_px", L"Corner radius (px)", L"Corner radius used by supported presets.", SettingsFieldType::Int, L"8", {}, 110});
@@ -251,14 +253,14 @@ void VisualModesPlugin::RegisterCommands() const
     m_context.commandDispatcher->RegisterCommand(L"theme.switch", [this](const CommandContext& command) { HandleThemeSwitch(command); });
     m_context.commandDispatcher->RegisterCommand(L"theme.compact_toggle", [this](const CommandContext& command) { HandleCompactToggle(command); });
     m_context.commandDispatcher->RegisterCommand(L"theme.presentation_toggle", [this](const CommandContext& command) { HandlePresentationToggle(command); });
-    m_context.commandDispatcher->RegisterCommand(L"theme.apply_current_to_fence", [this](const CommandContext& command) { HandleApplyCurrentToFence(command); });
-    m_context.commandDispatcher->RegisterCommand(L"theme.reset_fence", [this](const CommandContext& command) { HandleResetFence(command); });
+    m_context.commandDispatcher->RegisterCommand(L"theme.apply_current_to_space", [this](const CommandContext& command) { HandleApplyCurrentToSpace(command); });
+    m_context.commandDispatcher->RegisterCommand(L"theme.reset_space", [this](const CommandContext& command) { HandleResetSpace(command); });
     m_context.commandDispatcher->RegisterCommand(L"theme.host_bridge_sync", [this](const CommandContext&) { SetPreset(GetSetting(L"theme.preset", L"graphite-office")); Notify(L"Host theme bridge synchronized."); });
 
     // Compatibility aliases used by older/context-action routes.
-    m_context.commandDispatcher->RegisterCommand(L"appearance.mode.focus", [this](const CommandContext& command) { HandleApplyCurrentToFence(command); });
+    m_context.commandDispatcher->RegisterCommand(L"appearance.mode.focus", [this](const CommandContext& command) { HandleApplyCurrentToSpace(command); });
     m_context.commandDispatcher->RegisterCommand(L"appearance.mode.cycle", [this](const CommandContext& command) { HandleThemeSwitch(command); });
-    m_context.commandDispatcher->RegisterCommand(L"appearance.mode.reset", [this](const CommandContext& command) { HandleResetFence(command); });
+    m_context.commandDispatcher->RegisterCommand(L"appearance.mode.reset", [this](const CommandContext& command) { HandleResetSpace(command); });
 }
 
 void VisualModesPlugin::HandleThemeSwitch(const CommandContext&) const
@@ -271,7 +273,7 @@ void VisualModesPlugin::HandleThemeSwitch(const CommandContext&) const
     std::vector<std::wstring> presets;
     for (const auto& option : Win32ThemeOptions())
     {
-        presets.push_back(option.first);
+        presets.push_back(option.value);
     }
 
     const std::wstring current = NormalizeWin32ThemeId(GetSetting(L"theme.preset", L"graphite-office"));
@@ -286,10 +288,10 @@ void VisualModesPlugin::HandleThemeSwitch(const CommandContext&) const
 
     if (GetSettingBool(L"theme.apply_global", true) && !IsSafeModeEnabled())
     {
-        const FenceMetadata active = m_context.appCommands->GetActiveFenceMetadata();
+        const SpaceMetadata active = m_context.appCommands->GetActiveSpaceMetadata();
         if (!active.id.empty())
         {
-            ApplyPresetToFence(active.id, nextPreset, true);
+            ApplyPresetToSpace(active.id, nextPreset, true);
         }
     }
 }
@@ -305,11 +307,11 @@ void VisualModesPlugin::HandleCompactToggle(const CommandContext& command) const
     const std::wstring next = (current == L"mono-minimal") ? L"graphite-office" : L"mono-minimal";
     SetPreset(next);
 
-    const std::wstring fenceId = ResolveTargetFenceId(command);
-    if (!fenceId.empty())
+    const std::wstring spaceId = ResolveTargetSpaceId(command);
+    if (!spaceId.empty())
     {
         const bool applyToAll = GetSettingBool(L"theme.apply_global", true);
-        ApplyPresetToFence(fenceId, next, applyToAll);
+        ApplyPresetToSpace(spaceId, next, applyToAll);
     }
 }
 
@@ -324,54 +326,54 @@ void VisualModesPlugin::HandlePresentationToggle(const CommandContext& command) 
     const std::wstring next = (current == L"storm-steel") ? L"aurora-light" : L"storm-steel";
     SetPreset(next);
 
-    const std::wstring fenceId = ResolveTargetFenceId(command);
-    if (!fenceId.empty())
+    const std::wstring spaceId = ResolveTargetSpaceId(command);
+    if (!spaceId.empty())
     {
         const bool applyToAll = GetSettingBool(L"theme.apply_global", true);
-        ApplyPresetToFence(fenceId, next, applyToAll);
+        ApplyPresetToSpace(spaceId, next, applyToAll);
     }
 }
 
-void VisualModesPlugin::HandleApplyCurrentToFence(const CommandContext& command) const
+void VisualModesPlugin::HandleApplyCurrentToSpace(const CommandContext& command) const
 {
     if (!IsPluginEnabled())
     {
         return;
     }
 
-    if (!GetSettingBool(L"theme.allow_per_fence_override", true))
+    if (!GetSettingBool(L"theme.allow_per_space_override", true))
     {
         return;
     }
 
-    const std::wstring fenceId = ResolveTargetFenceId(command);
-    if (fenceId.empty())
+    const std::wstring spaceId = ResolveTargetSpaceId(command);
+    if (spaceId.empty())
     {
         return;
     }
 
-    ApplyPresetToFence(fenceId, NormalizeWin32ThemeId(GetSetting(L"theme.preset", L"graphite-office")), false);
+    ApplyPresetToSpace(spaceId, NormalizeWin32ThemeId(GetSetting(L"theme.preset", L"graphite-office")), false);
 }
 
-void VisualModesPlugin::HandleResetFence(const CommandContext& command) const
+void VisualModesPlugin::HandleResetSpace(const CommandContext& command) const
 {
     if (!IsPluginEnabled())
     {
         return;
     }
 
-    if (!GetSettingBool(L"theme.allow_per_fence_override", true))
+    if (!GetSettingBool(L"theme.allow_per_space_override", true))
     {
         return;
     }
 
-    const std::wstring fenceId = ResolveTargetFenceId(command);
-    if (fenceId.empty())
+    const std::wstring spaceId = ResolveTargetSpaceId(command);
+    if (spaceId.empty())
     {
         return;
     }
 
-    ApplyPresetToFence(fenceId, L"graphite-office", false);
+    ApplyPresetToSpace(spaceId, L"graphite-office", false);
 }
 
 std::wstring VisualModesPlugin::GetSetting(const std::wstring& key, const std::wstring& fallback) const
@@ -458,25 +460,25 @@ void VisualModesPlugin::SetPreset(const std::wstring& preset) const
     LogInfo(L"Preset switched to " + normalized);
 }
 
-std::wstring VisualModesPlugin::ResolveTargetFenceId(const CommandContext& command) const
+std::wstring VisualModesPlugin::ResolveTargetSpaceId(const CommandContext& command) const
 {
-    if (!command.fence.id.empty())
+    if (!command.space.id.empty())
     {
-        return command.fence.id;
+        return command.space.id;
     }
 
     const CommandContext activeCommand = m_context.appCommands->GetCurrentCommandContext();
-    if (!activeCommand.fence.id.empty())
+    if (!activeCommand.space.id.empty())
     {
-        return activeCommand.fence.id;
+        return activeCommand.space.id;
     }
 
-    return m_context.appCommands->GetActiveFenceMetadata().id;
+    return m_context.appCommands->GetActiveSpaceMetadata().id;
 }
 
-FencePresentationSettings VisualModesPlugin::BuildPresentationFromPreset(const std::wstring& preset) const
+SpacePresentationSettings VisualModesPlugin::BuildPresentationFromPreset(const std::wstring& preset) const
 {
-    FencePresentationSettings settings;
+    SpacePresentationSettings settings;
 
     if (preset == L"custom")
     {
@@ -511,9 +513,9 @@ FencePresentationSettings VisualModesPlugin::BuildPresentationFromPreset(const s
     return settings;
 }
 
-void VisualModesPlugin::ApplyPresetToFence(const std::wstring& fenceId, const std::wstring& preset, bool applyToAll) const
+void VisualModesPlugin::ApplyPresetToSpace(const std::wstring& spaceId, const std::wstring& preset, bool applyToAll) const
 {
-    if (!m_context.appCommands || fenceId.empty())
+    if (!m_context.appCommands || spaceId.empty())
     {
         return;
     }
@@ -523,9 +525,9 @@ void VisualModesPlugin::ApplyPresetToFence(const std::wstring& fenceId, const st
         return;
     }
 
-    FencePresentationSettings settings = BuildPresentationFromPreset(preset);
+    SpacePresentationSettings settings = BuildPresentationFromPreset(preset);
     settings.applyToAll = applyToAll && !IsSafeModeEnabled();
-    m_context.appCommands->UpdateFencePresentation(fenceId, settings);
+    m_context.appCommands->UpdateSpacePresentation(spaceId, settings);
     Notify(L"Visual preset applied.");
 }
 

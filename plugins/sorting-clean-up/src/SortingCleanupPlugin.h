@@ -28,7 +28,7 @@ private:
     void HandleAlignGrid(const CommandContext& command) const;
     void HandleAutoSortToggle(const CommandContext& command) const;
 
-    FenceMetadata ResolveFence(const CommandContext& command) const;
+    SpaceMetadata ResolveSpace(const CommandContext& command) const;
     bool GetBool(const std::wstring& key, bool fallback) const;
     int GetInt(const std::wstring& key, int fallback) const;
     std::wstring GetString(const std::wstring& key, const std::wstring& fallback) const;
@@ -38,11 +38,11 @@ private:
     std::wstring GetDefaultMode() const;
     int GetRefreshIntervalSeconds() const;
     void Notify(const std::wstring& message) const;
-    void RefreshFenceWithThrottle(const std::wstring& fenceId) const;
+    void RefreshSpaceWithThrottle(const std::wstring& spaceId) const;
     void SetSetting(const std::wstring& key, const std::wstring& value) const;
     void LogInfo(const std::wstring& message) const;
     void LogWarn(const std::wstring& message) const;
 
     static std::filesystem::path BuildUniquePath(const std::filesystem::path& target);
-    void ApplySortPlan(const FenceMetadata& fence, const std::vector<std::filesystem::path>& files) const;
+    void ApplySortPlan(const SpaceMetadata& space, const std::vector<std::filesystem::path>& files) const;
 };

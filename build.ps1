@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Builds all Simple Fences plugins.
+    Builds all Simple Spaces plugins.
 
 .DESCRIPTION
     Configures and builds all 12 plugins using CMake and MSVC, then validates
@@ -84,7 +84,7 @@ $buildPath = Join-Path $repoRoot $BuildDir
 
 Write-Host ""
 Write-Host "╔══════════════════════════════════════════════════╗" -ForegroundColor Cyan
-Write-Host "║        Simple Fences Plugin Builder              ║" -ForegroundColor Cyan
+Write-Host "║        Simple Spaces Plugin Builder              ║" -ForegroundColor Cyan
 Write-Host "╚══════════════════════════════════════════════════╝" -ForegroundColor Cyan
 Write-Host "  Repo root    : $repoRoot"
 Write-Host "  Build dir    : $buildPath"

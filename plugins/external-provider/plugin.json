@@ -1,9 +1,9 @@
 {
   "id": "community.external_provider",
-  "displayName": "External Provider Fences",
+  "displayName": "External Provider Spaces",
   "version": "1.0.2",
   "description": "Shows provider-backed virtual item lists from external and generated sources.",
-  "author": "SimpleFences Community",
+  "author": "SimpleSpaces Community",
   "minHostVersion": "0.0.013",
   "maxHostVersion": "0.1.999",
   "minHostApiVersion": "0.0.012",
@@ -14,7 +14,7 @@
   "icon": "",
   "updateChannelId": "stable",
   "capabilities": [
-    "fence_content_provider",
+    "space_content_provider",
     "commands",
     "settings_pages",
     "tray_contributions"
@@ -23,7 +23,7 @@
   "supportsHostedSummaryPanel": true,
   "hostedSummaryPanel": {
     "panelId": "community.external_provider.summary",
-    "title": "External Provider Fences Overview",
+    "title": "External Provider Spaces Overview",
     "schemaVersion": "1",
     "layout": "cards",
     "themeTokenNamespace": "win32_theme_system",

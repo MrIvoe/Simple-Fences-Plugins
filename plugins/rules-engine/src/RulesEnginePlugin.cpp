@@ -1,5 +1,7 @@
 #include "RulesEnginePlugin.h"
 
+#include "core/CommandDispatcher.h"
+#include "core/Diagnostics.h"
 #include "extensions/MenuContributionRegistry.h"
 #include "extensions/PluginSettingsRegistry.h"
 #include "extensions/SettingsSchema.h"
@@ -14,7 +16,7 @@
 
 namespace
 {
-    std::wstring DetermineRoute(const FenceItemMetadata& item)
+    std::wstring DetermineRoute(const SpaceItemMetadata& item)
     {
         if (item.isDirectory)
         {
@@ -102,8 +104,8 @@ PluginManifest RulesEnginePlugin::GetManifest() const
     m.displayName = L"Rules Engine";
     m.version = L"1.1.2";
     m.description = L"Routes and classifies items using ordered matching rules.";
-    m.minHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
-    m.maxHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
+    m.minHostApiVersion = SimpleSpacesVersion::kPluginApiVersion;
+    m.maxHostApiVersion = SimpleSpacesVersion::kPluginApiVersion;
     m.capabilities = {L"commands", L"settings_pages", L"tray_contributions"};
     return m;
 }

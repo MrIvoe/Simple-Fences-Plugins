@@ -1,6 +1,8 @@
 #include "ExternalProviderPlugin.h"
 
-#include "extensions/FenceExtensionRegistry.h"
+#include "core/CommandDispatcher.h"
+#include "core/Diagnostics.h"
+#include "extensions/SpaceExtensionRegistry.h"
 #include "extensions/MenuContributionRegistry.h"
 #include "extensions/PluginSettingsRegistry.h"
 #include "extensions/SettingsSchema.h"
@@ -25,19 +27,19 @@ PluginManifest ExternalProviderPlugin::GetManifest() const
 {
     PluginManifest m;
     m.id = L"community.external_provider";
-    m.displayName = L"External Provider Fences";
+    m.displayName = L"External Provider Spaces";
     m.version = L"1.0.2";
     m.description = L"Shows provider-backed virtual item lists from external and generated sources.";
-    m.minHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
-    m.maxHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
-    m.capabilities = {L"fence_content_provider", L"commands", L"settings_pages", L"tray_contributions"};
+    m.minHostApiVersion = SimpleSpacesVersion::kPluginApiVersion;
+    m.maxHostApiVersion = SimpleSpacesVersion::kPluginApiVersion;
+    m.capabilities = {L"space_content_provider", L"commands", L"settings_pages", L"tray_contributions"};
     return m;
 }
 
 bool ExternalProviderPlugin::Initialize(const PluginContext& context)
 {
     m_context = context;
-    if (!m_context.fenceExtensionRegistry || !m_context.commandDispatcher || !m_context.settingsRegistry || !m_context.appCommands)
+    if (!m_context.spaceExtensionRegistry || !m_context.commandDispatcher || !m_context.settingsRegistry || !m_context.appCommands)
     {
         if (m_context.diagnostics)
         {
@@ -46,24 +48,24 @@ bool ExternalProviderPlugin::Initialize(const PluginContext& context)
         return false;
     }
 
-    FenceContentProviderDescriptor descriptor;
+    SpaceContentProviderDescriptor descriptor;
     descriptor.providerId = L"community.external_provider";
     descriptor.contentType = L"external_provider";
     descriptor.displayName = L"External Provider";
     descriptor.isCoreDefault = false;
 
-    FenceContentProviderCallbacks callbacks;
-    callbacks.enumerateItems = [this](const FenceMetadata& fence) {
-        return EnumerateItems(fence);
+    SpaceContentProviderCallbacks callbacks;
+    callbacks.enumerateItems = [this](const SpaceMetadata& space) {
+        return EnumerateItems(space);
     };
-    callbacks.handleDrop = [this](const FenceMetadata& fence, const std::vector<std::wstring>& paths) {
-        return HandleDrop(fence, paths);
+    callbacks.handleDrop = [this](const SpaceMetadata& space, const std::vector<std::wstring>& paths) {
+        return HandleDrop(space, paths);
     };
-    callbacks.deleteItem = [this](const FenceMetadata& fence, const FenceItem& item) {
-        return HandleDelete(fence, item);
+    callbacks.deleteItem = [this](const SpaceMetadata& space, const SpaceItem& item) {
+        return HandleDelete(space, item);
     };
 
-    m_context.fenceExtensionRegistry->RegisterContentProvider(descriptor, callbacks);
+    m_context.spaceExtensionRegistry->RegisterContentProvider(descriptor, callbacks);
 
     RegisterSettings();
     RegisterMenus();
@@ -87,7 +89,7 @@ void ExternalProviderPlugin::RegisterSettings() const
     page.order = 80;
 
     PluginUiPatterns::AppendBaselineSettingsFields(page.fields, 1, 60, false);
-    page.fields.push_back(SettingsFieldDescriptor{L"provider.enabled", L"Enable external providers", L"Master toggle for external provider fences.", SettingsFieldType::Bool, L"true", {}, 10});
+    page.fields.push_back(SettingsFieldDescriptor{L"provider.enabled", L"Enable external providers", L"Master toggle for external provider spaces.", SettingsFieldType::Bool, L"true", {}, 10});
     page.fields.push_back(SettingsFieldDescriptor{L"provider.refresh_mode", L"Refresh mode", L"Choose manual, interval, startup, or hybrid refresh policy.", SettingsFieldType::Enum, L"hybrid", {{L"manual", L"Manual"}, {L"interval", L"Interval"}, {L"on_startup", L"On startup"}, {L"hybrid", L"Hybrid"}}, 20});
     page.fields.push_back(SettingsFieldDescriptor{L"provider.refresh_interval_seconds", L"Refresh interval (s)", L"Interval for polling-based refresh.", SettingsFieldType::Int, L"300", {}, 30});
     page.fields.push_back(SettingsFieldDescriptor{L"provider.timeout_seconds", L"Timeout (s)", L"Timeout budget for provider operations.", SettingsFieldType::Int, L"15", {}, 40});
@@ -109,7 +111,7 @@ void ExternalProviderPlugin::RegisterMenus() const
         return;
     }
 
-    m_context.menuRegistry->Register(MenuContribution{MenuSurface::Tray, L"New External Provider Fence", L"provider.new", 710, false});
+    m_context.menuRegistry->Register(MenuContribution{MenuSurface::Tray, L"New External Provider Space", L"provider.new", 710, false});
     m_context.menuRegistry->Register(MenuContribution{MenuSurface::Tray, L"Refresh Current Provider", L"provider.refresh_current", 720, false});
     m_context.menuRegistry->Register(MenuContribution{MenuSurface::Tray, L"Refresh All Providers", L"provider.refresh_all", 730, false});
     m_context.menuRegistry->Register(MenuContribution{MenuSurface::Tray, L"Reconnect Failed Providers", L"provider.reconnect_failed", 740, false});
@@ -123,12 +125,12 @@ void ExternalProviderPlugin::RegisterCommands() const
     m_context.commandDispatcher->RegisterCommand(L"provider.reconnect_failed", [this](const CommandContext& command) { HandleReconnectFailed(command); });
 }
 
-std::vector<FenceItem> ExternalProviderPlugin::EnumerateItems(const FenceMetadata& fence) const
+std::vector<SpaceItem> ExternalProviderPlugin::EnumerateItems(const SpaceMetadata& space) const
 {
-    std::vector<FenceItem> items;
+    std::vector<SpaceItem> items;
     if (!GetBool(L"provider.enabled", true))
     {
-        m_context.appCommands->UpdateFenceContentState(fence.id, L"offline", L"Provider disabled by settings.");
+        m_context.appCommands->UpdateSpaceContentState(space.id, L"offline", L"Provider disabled by settings.");
         return items;
     }
 
@@ -136,22 +138,22 @@ std::vector<FenceItem> ExternalProviderPlugin::EnumerateItems(const FenceMetadat
     const int cacheTtl = GetInt(L"provider.cache_ttl_seconds", 600);
     if (cacheEnabled)
     {
-        const auto it = m_cache.find(fence.id);
+        const auto it = m_cache.find(space.id);
         if (it != m_cache.end())
         {
             const long long age = EpochSecondsNow() - it->second.timestampSeconds;
             if (age >= 0 && age <= cacheTtl)
             {
-                m_context.appCommands->UpdateFenceContentState(fence.id, L"connected", L"Serving cached provider data.");
+                m_context.appCommands->UpdateSpaceContentState(space.id, L"connected", L"Serving cached provider data.");
                 return it->second.items;
             }
         }
     }
 
-    const std::wstring source = ResolveSource(fence);
+    const std::wstring source = ResolveSource(space);
     if (source.empty())
     {
-        m_context.appCommands->UpdateFenceContentState(fence.id, L"unavailable", L"No source configured.");
+        m_context.appCommands->UpdateSpaceContentState(space.id, L"unavailable", L"No source configured.");
         return items;
     }
 
@@ -167,7 +169,7 @@ std::vector<FenceItem> ExternalProviderPlugin::EnumerateItems(const FenceMetadat
                 continue;
             }
 
-            FenceItem item;
+            SpaceItem item;
             item.name = entry.path().filename().wstring();
             item.fullPath = entry.path().wstring();
             item.originalPath = entry.path().wstring();
@@ -175,14 +177,14 @@ std::vector<FenceItem> ExternalProviderPlugin::EnumerateItems(const FenceMetadat
             items.push_back(std::move(item));
         }
 
-        m_context.appCommands->UpdateFenceContentState(fence.id, L"connected", L"Directory provider source loaded.");
+        m_context.appCommands->UpdateSpaceContentState(space.id, L"connected", L"Directory provider source loaded.");
     }
     else if (fs::exists(sourcePath, ec))
     {
         std::wifstream in(sourcePath);
         if (!in.is_open())
         {
-            m_context.appCommands->UpdateFenceContentState(fence.id, L"permission_denied", L"Cannot open configured source file.");
+            m_context.appCommands->UpdateSpaceContentState(space.id, L"permission_denied", L"Cannot open configured source file.");
             return items;
         }
 
@@ -194,7 +196,7 @@ std::vector<FenceItem> ExternalProviderPlugin::EnumerateItems(const FenceMetadat
                 continue;
             }
 
-            FenceItem item;
+            SpaceItem item;
             item.name = line;
             item.fullPath = line;
             item.originalPath = line;
@@ -202,81 +204,81 @@ std::vector<FenceItem> ExternalProviderPlugin::EnumerateItems(const FenceMetadat
             items.push_back(std::move(item));
         }
 
-        m_context.appCommands->UpdateFenceContentState(fence.id, L"connected", L"File/list provider source loaded.");
+        m_context.appCommands->UpdateSpaceContentState(space.id, L"connected", L"File/list provider source loaded.");
     }
     else
     {
-        m_context.appCommands->UpdateFenceContentState(fence.id, L"offline", L"Configured provider source path does not exist.");
+        m_context.appCommands->UpdateSpaceContentState(space.id, L"offline", L"Configured provider source path does not exist.");
         return items;
     }
 
     if (cacheEnabled)
     {
-        m_cache[fence.id] = CacheEntry{items, EpochSecondsNow()};
+        m_cache[space.id] = CacheEntry{items, EpochSecondsNow()};
     }
 
     return items;
 }
 
-bool ExternalProviderPlugin::HandleDrop(const FenceMetadata&, const std::vector<std::wstring>&) const
+bool ExternalProviderPlugin::HandleDrop(const SpaceMetadata&, const std::vector<std::wstring>&) const
 {
     return !GetBool(L"provider.read_only_default", true);
 }
 
-bool ExternalProviderPlugin::HandleDelete(const FenceMetadata&, const FenceItem&) const
+bool ExternalProviderPlugin::HandleDelete(const SpaceMetadata&, const SpaceItem&) const
 {
     return !GetBool(L"provider.read_only_default", true);
 }
 
 void ExternalProviderPlugin::HandleProviderNew(const CommandContext&) const
 {
-    FenceCreateRequest request;
+    SpaceCreateRequest request;
     request.title = L"External Provider";
     request.contentType = L"external_provider";
     request.contentPluginId = L"community.external_provider";
     request.contentSource = GetString(L"provider.json.source", L"");
 
-    const std::wstring createdFence = m_context.appCommands->CreateFenceNearCursor(request);
-    if (!createdFence.empty())
+    const std::wstring createdSpace = m_context.appCommands->CreateSpaceNearCursor(request);
+    if (!createdSpace.empty())
     {
         if (!request.contentSource.empty())
         {
-            m_context.appCommands->UpdateFenceContentSource(createdFence, request.contentSource);
+            m_context.appCommands->UpdateSpaceContentSource(createdSpace, request.contentSource);
         }
         else
         {
-            m_context.appCommands->UpdateFenceContentState(createdFence, L"unavailable", L"Set provider source in plugin settings.");
+            m_context.appCommands->UpdateSpaceContentState(createdSpace, L"unavailable", L"Set provider source in plugin settings.");
         }
 
-        Notify(L"External provider fence created.");
+        Notify(L"External provider space created.");
     }
 }
 
 void ExternalProviderPlugin::HandleRefreshCurrent(const CommandContext& command) const
 {
-    const std::wstring fenceId = ResolveCurrentFenceId(command);
-    if (fenceId.empty())
+    const std::wstring spaceId = ResolveCurrentSpaceId(command);
+    if (spaceId.empty())
     {
-        LogWarn(L"provider.refresh_current skipped: no fence context");
+        LogWarn(L"provider.refresh_current skipped: no space context");
         return;
     }
 
-    m_cache.erase(fenceId);
-    RefreshFenceWithThrottle(fenceId);
+    m_cache.erase(spaceId);
+    RefreshSpaceWithThrottle(spaceId);
     Notify(L"Refresh current provider requested.");
 }
 
 void ExternalProviderPlugin::HandleRefreshAll(const CommandContext&) const
 {
     m_cache.clear();
-    const auto ids = m_context.appCommands->GetAllFenceIds();
+    const auto ids = m_context.appCommands->GetAllSpaceIds();
     bool any = false;
     for (const auto& id : ids)
     {
-        const FenceMetadata fence = m_context.appCommands->GetFenceMetadata(id);
-        if (fence.contentType == L"external_provider")
+        const SpaceMetadata space = m_context.appCommands->GetSpaceMetadata(id);
+        if (space.contentType == L"external_provider")
         {
-            RefreshFenceWithThrottle(id);
+            RefreshSpaceWithThrottle(id);
             any = true;
         }
     }
@@ -289,21 +291,21 @@ void ExternalProviderPlugin::HandleRefreshAll(const CommandContext&) const
 
 void ExternalProviderPlugin::HandleReconnectFailed(const CommandContext&) const
 {
-    const auto ids = m_context.appCommands->GetAllFenceIds();
+    const auto ids = m_context.appCommands->GetAllSpaceIds();
     bool any = false;
     for (const auto& id : ids)
     {
-        const FenceMetadata fence = m_context.appCommands->GetFenceMetadata(id);
-        if (fence.contentType != L"external_provider")
+        const SpaceMetadata space = m_context.appCommands->GetSpaceMetadata(id);
+        if (space.contentType != L"external_provider")
         {
             continue;
         }
 
-        if (fence.contentState == L"offline" || fence.contentState == L"unavailable" || fence.contentState == L"permission_denied")
+        if (space.contentState == L"offline" || space.contentState == L"unavailable" || space.contentState == L"permission_denied")
         {
-            m_context.appCommands->UpdateFenceContentState(id, L"connected", L"Reconnect requested");
+            m_context.appCommands->UpdateSpaceContentState(id, L"connected", L"Reconnect requested");
             m_cache.erase(id);
-            RefreshFenceWithThrottle(id);
+            RefreshSpaceWithThrottle(id);
             any = true;
         }
     }
@@ -347,9 +349,9 @@ void ExternalProviderPlugin::Notify(const std::wstring& message) const
     m_context.diagnostics->Info(L"[ExternalProvider][Notification] " + message);
 }
 
-void ExternalProviderPlugin::RefreshFenceWithThrottle(const std::wstring& fenceId) const
+void ExternalProviderPlugin::RefreshSpaceWithThrottle(const std::wstring& spaceId) const
 {
-    if (!m_context.appCommands || fenceId.empty())
+    if (!m_context.appCommands || spaceId.empty())
     {
         return;
     }
@@ -361,22 +363,22 @@ void ExternalProviderPlugin::RefreshFenceWithThrottle(const std::wstring& fenceI
     }
 
     const auto now = std::chrono::steady_clock::now();
-    const auto it = m_lastRefreshAtByFence.find(fenceId);
-    if (it != m_lastRefreshAtByFence.end() && (now - it->second) < std::chrono::seconds(seconds))
+    const auto it = m_lastRefreshAtBySpace.find(spaceId);
+    if (it != m_lastRefreshAtBySpace.end() && (now - it->second) < std::chrono::seconds(seconds))
     {
         LogInfo(L"Provider refresh throttled by plugin.refresh_interval_seconds");
         return;
     }
 
-    m_lastRefreshAtByFence[fenceId] = now;
-    m_context.appCommands->RefreshFence(fenceId);
+    m_lastRefreshAtBySpace[spaceId] = now;
+    m_context.appCommands->RefreshSpace(spaceId);
 }
 
-std::wstring ExternalProviderPlugin::ResolveSource(const FenceMetadata& fence) const
+std::wstring ExternalProviderPlugin::ResolveSource(const SpaceMetadata& space) const
 {
-    if (!fence.contentSource.empty())
+    if (!space.contentSource.empty())
     {
-        return fence.contentSource;
+        return space.contentSource;
     }
 
     const std::wstring fromJson = GetString(L"provider.json.source", L"");
@@ -388,20 +390,20 @@ std::wstring ExternalProviderPlugin::ResolveSource(const FenceMetadata& fence) c
     return GetString(L"provider.network.root_path", L"");
 }
 
-std::wstring ExternalProviderPlugin::ResolveCurrentFenceId(const CommandContext& command) const
+std::wstring ExternalProviderPlugin::ResolveCurrentSpaceId(const CommandContext& command) const
 {
-    if (!command.fence.id.empty())
+    if (!command.space.id.empty())
     {
-        return command.fence.id;
+        return command.space.id;
     }
 
     const CommandContext current = m_context.appCommands->GetCurrentCommandContext();
-    if (!current.fence.id.empty())
+    if (!current.space.id.empty())
     {
-        return current.fence.id;
+        return current.space.id;
     }
 
-    return m_context.appCommands->GetActiveFenceMetadata().id;
+    return m_context.appCommands->GetActiveSpaceMetadata().id;
 }
 
 void ExternalProviderPlugin::LogInfo(const std::wstring& message) const

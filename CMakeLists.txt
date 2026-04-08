@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(SimpleFencesPlugins VERSION 1.0.0 LANGUAGES CXX)
+project(SpacesPlugins VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -51,14 +51,23 @@ set(PLUGIN_COMPILE_DEFS UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
 #   <BUILD_DIR>/output/plugins/<PLUGIN_DIR>/
 # alongside a copy of its plugin.json.
 # ---------------------------------------------------------------------------
-function(add_plugin TARGET_NAME PLUGIN_DIR)
+function(add_plugin TARGET_NAME PLUGIN_DIR PLUGIN_HEADER PLUGIN_CLASS)
     cmake_parse_arguments(_P "" "" "SOURCES" ${ARGN})
 
     if(NOT _P_SOURCES)
         message(FATAL_ERROR "add_plugin(${TARGET_NAME}): no SOURCES provided")
     endif()
 
-    add_library(${TARGET_NAME} SHARED ${_P_SOURCES})
+    set(_export_src "${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}_exports.cpp")
+    set(PLUGIN_HEADER "${PLUGIN_HEADER}")
+    set(PLUGIN_CLASS "${PLUGIN_CLASS}")
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/PluginExports.cpp.in" "${_export_src}" @ONLY)
+
+    add_library(${TARGET_NAME} SHARED
+        ${_P_SOURCES}
+        "${_export_src}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/plugins/shared/HostSdkRuntimeShim.cpp"
+    )
 
     target_include_directories(${TARGET_NAME} PRIVATE
         "${_sdk_path}"                                                        # extensions/
@@ -105,18 +114,18 @@ endfunction()
 # Plugin targets — one per plugin subdirectory
 # ---------------------------------------------------------------------------
 
-add_plugin(plugin_clock_widget          clock-widget        SOURCES plugins/clock-widget/src/ClockWidgetPlugin.cpp)
-add_plugin(plugin_context_actions       context-actions     SOURCES plugins/context-actions/src/ContextActionsPlugin.cpp)
-add_plugin(plugin_external_provider     external-provider   SOURCES plugins/external-provider/src/ExternalProviderPlugin.cpp)
-add_plugin(plugin_fence_organizer       fence-organizer     SOURCES plugins/fence-organizer/src/FenceOrganizerPlugin.cpp)
-add_plugin(plugin_folder_portal         folder-portal       SOURCES plugins/folder-portal/src/FolderPortalPlugin.cpp)
-add_plugin(plugin_network_drive_fence   network-drive-fence SOURCES plugins/network-drive-fence/src/NetworkDriveFencePlugin.cpp)
-add_plugin(plugin_powershell_fence      powershell-fence    SOURCES plugins/powershell-fence/src/PowerShellFencePlugin.cpp)
-add_plugin(plugin_productivity_actions  productivity-actions SOURCES plugins/productivity-actions/src/ProductivityActionsPlugin.cpp)
-add_plugin(plugin_rules_engine          rules-engine        SOURCES plugins/rules-engine/src/RulesEnginePlugin.cpp)
-add_plugin(plugin_sorting_cleanup       sorting-clean-up    SOURCES plugins/sorting-clean-up/src/SortingCleanupPlugin.cpp)
-add_plugin(plugin_visual_modes          visual-modes        SOURCES plugins/visual-modes/src/VisualModesPlugin.cpp)
-add_plugin(plugin_widgets_plus          widgets-plus        SOURCES plugins/widgets-plus/src/WidgetsPlusPlugin.cpp)
+add_plugin(plugin_clock_widget          clock-widget         ClockWidgetPlugin.h         ClockWidgetPlugin         SOURCES plugins/clock-widget/src/ClockWidgetPlugin.cpp)
+add_plugin(plugin_context_actions       context-actions      ContextActionsPlugin.h      ContextActionsPlugin      SOURCES plugins/context-actions/src/ContextActionsPlugin.cpp)
+add_plugin(plugin_external_provider     external-provider    ExternalProviderPlugin.h    ExternalProviderPlugin    SOURCES plugins/external-provider/src/ExternalProviderPlugin.cpp)
+add_plugin(plugin_space_organizer       space-organizer      SpaceOrganizerPlugin.h      SpaceOrganizerPlugin      SOURCES plugins/space-organizer/src/SpaceOrganizerPlugin.cpp)
+add_plugin(plugin_folder_portal         folder-portal        FolderPortalPlugin.h        FolderPortalPlugin        SOURCES plugins/folder-portal/src/FolderPortalPlugin.cpp)
+add_plugin(plugin_network_drive_space   network-drive-space  NetworkDriveSpacePlugin.h   NetworkDriveSpacePlugin   SOURCES plugins/network-drive-space/src/NetworkDriveSpacePlugin.cpp)
+add_plugin(plugin_powershell_space      powershell-space     PowerShellSpacePlugin.h     PowerShellSpacePlugin     SOURCES plugins/powershell-space/src/PowerShellSpacePlugin.cpp)
+add_plugin(plugin_productivity_actions  productivity-actions ProductivityActionsPlugin.h ProductivityActionsPlugin SOURCES plugins/productivity-actions/src/ProductivityActionsPlugin.cpp)
+add_plugin(plugin_rules_engine          rules-engine         RulesEnginePlugin.h         RulesEnginePlugin         SOURCES plugins/rules-engine/src/RulesEnginePlugin.cpp)
+add_plugin(plugin_sorting_cleanup       sorting-clean-up     SortingCleanupPlugin.h      SortingCleanupPlugin      SOURCES plugins/sorting-clean-up/src/SortingCleanupPlugin.cpp)
+add_plugin(plugin_visual_modes          visual-modes         VisualModesPlugin.h         VisualModesPlugin         SOURCES plugins/visual-modes/src/VisualModesPlugin.cpp)
+add_plugin(plugin_widgets_plus          widgets-plus         WidgetsPlusPlugin.h         WidgetsPlusPlugin         SOURCES plugins/widgets-plus/src/WidgetsPlusPlugin.cpp)
 
 # ---------------------------------------------------------------------------
 # Summary

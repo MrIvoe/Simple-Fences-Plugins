@@ -1,6 +1,6 @@
 # Context Actions
 
-Payload-aware right-click actions for desktop, fence, and item workflows.
+Payload-aware right-click actions for desktop, Space, and item workflows.
 
 ## Plugin Snapshot
 

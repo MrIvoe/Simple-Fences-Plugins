@@ -5,7 +5,7 @@
 #include <chrono>
 
 // Community plugin: Clock Widget
-// Renders a live clock inside a fence widget panel.
+// Renders a live clock inside a space widget panel.
 class ClockWidgetPlugin final : public IPlugin
 {
 public:

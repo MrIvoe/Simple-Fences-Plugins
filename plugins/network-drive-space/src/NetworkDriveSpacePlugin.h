@@ -4,9 +4,9 @@
 
 #include <chrono>
 
-// Community plugin: Network Drive Fence
-// Registers a fence_content_provider that browses a UNC / mapped drive path.
-class NetworkDriveFencePlugin final : public IPlugin
+// Community plugin: Network Drive Space
+// Registers a space_content_provider that browses a UNC / mapped drive path.
+class NetworkDriveSpacePlugin final : public IPlugin
 {
 public:
     PluginManifest GetManifest() const override;
@@ -20,5 +20,5 @@ private:
     bool GetBool(const std::wstring& key, bool fallback) const;
     int GetInt(const std::wstring& key, int fallback) const;
     void Notify(const std::wstring& message) const;
-    void RefreshNetworkFencesWithThrottle() const;
+    void RefreshNetworkSpacesWithThrottle() const;
 };

@@ -2,7 +2,7 @@
 
 ## Production / High Parity
 
-- `fence-organizer`
+- `Space-organizer`
 - `folder-portal`
 - `context-actions`
 - `visual-modes`
@@ -15,8 +15,8 @@
 
 - `widgets-plus`
 - `clock-widget`
-- `network-drive-fence`
-- `powershell-fence`
+- `network-drive-Space`
+- `powershell-Space`
 
 ## Plugin Folder Contract
 

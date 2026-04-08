@@ -1,9 +1,12 @@
 #include "WidgetsPlusPlugin.h"
 
+#include "core/CommandDispatcher.h"
+#include "core/Diagnostics.h"
 #include "extensions/MenuContributionRegistry.h"
 #include "extensions/PluginSettingsRegistry.h"
 #include "extensions/SettingsSchema.h"
 #include "../../shared/PluginUiPatterns.h"
+
 
 PluginManifest WidgetsPlusPlugin::GetManifest() const
 {
@@ -12,8 +15,8 @@ PluginManifest WidgetsPlusPlugin::GetManifest() const
     m.displayName = L"Widgets Plus";
     m.version = L"1.0.2";
     m.description = L"Provides embeddable utility widgets with bounded refresh and persisted state.";
-    m.minHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
-    m.maxHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
+    m.minHostApiVersion = SimpleSpacesVersion::kPluginApiVersion;
+    m.maxHostApiVersion = SimpleSpacesVersion::kPluginApiVersion;
     m.capabilities = {L"widgets", L"commands", L"settings_pages", L"tray_contributions"};
     return m;
 }
@@ -129,13 +132,13 @@ void WidgetsPlusPlugin::HandleRefreshAll(const CommandContext&) const
 
     if (m_context.appCommands)
     {
-        const auto ids = m_context.appCommands->GetAllFenceIds();
+        const auto ids = m_context.appCommands->GetAllSpaceIds();
         for (const auto& id : ids)
         {
-            const FenceMetadata meta = m_context.appCommands->GetFenceMetadata(id);
+            const SpaceMetadata meta = m_context.appCommands->GetSpaceMetadata(id);
             if (meta.contentType == L"widget_panel")
             {
-                RefreshFenceWithThrottle(id);
+                RefreshSpaceWithThrottle(id);
             }
         }
     }
@@ -184,9 +187,9 @@ void WidgetsPlusPlugin::Notify(const std::wstring& message) const
     m_context.diagnostics->Info(L"[WidgetsPlus][Notification] " + message);
 }
 
-void WidgetsPlusPlugin::RefreshFenceWithThrottle(const std::wstring& fenceId) const
+void WidgetsPlusPlugin::RefreshSpaceWithThrottle(const std::wstring& spaceId) const
 {
-    if (!m_context.appCommands || fenceId.empty())
+    if (!m_context.appCommands || spaceId.empty())
     {
         return;
     }
@@ -198,15 +201,15 @@ void WidgetsPlusPlugin::RefreshFenceWithThrottle(const std::wstring& fenceId) co
     }
 
     const auto now = std::chrono::steady_clock::now();
-    const auto it = m_lastRefreshAtByFence.find(fenceId);
-    if (it != m_lastRefreshAtByFence.end() && (now - it->second) < std::chrono::seconds(seconds))
+    const auto it = m_lastRefreshAtBySpace.find(spaceId);
+    if (it != m_lastRefreshAtBySpace.end() && (now - it->second) < std::chrono::seconds(seconds))
     {
         LogInfo(L"Widget refresh throttled by plugin.refresh_interval_seconds");
         return;
     }
 
-    m_lastRefreshAtByFence[fenceId] = now;
-    m_context.appCommands->RefreshFence(fenceId);
+    m_lastRefreshAtBySpace[spaceId] = now;
+    m_context.appCommands->RefreshSpace(spaceId);
 }
 
 void WidgetsPlusPlugin::LogInfo(const std::wstring& message) const

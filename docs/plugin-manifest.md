@@ -31,8 +31,8 @@ Optional `permissions` array can be used to declare sensitive capability intent.
 
 Current allowed permissions:
 
-- `read_fence_metadata`
-- `write_fence_settings`
+- `read_space_metadata`
+- `write_space_settings`
 - `read_settings`
 - `write_settings`
 - `network_access`

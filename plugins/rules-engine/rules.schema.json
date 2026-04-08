@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://simplefences.dev/schemas/rules-engine/rules.schema.json",
-  "title": "SimpleFences Rules Engine Rule Set",
+  "$id": "https://simplespaces.dev/schemas/rules-engine/rules.schema.json",
+  "title": "SimpleSpaces Rules Engine Rule Set",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -105,7 +105,7 @@
         "isDirectory": {
           "type": "boolean"
         },
-        "sourceFenceIds": {
+        "sourceSpaceIds": {
           "type": "array",
           "items": {
             "type": "string"
@@ -124,7 +124,7 @@
           "type": "string",
           "enum": [
             "route_to_group",
-            "move_to_fence",
+            "move_to_space",
             "tag",
             "set_priority",
             "run_command"
@@ -133,7 +133,7 @@
         "group": {
           "type": "string"
         },
-        "fenceId": {
+        "spaceId": {
           "type": "string"
         },
         "tag": {

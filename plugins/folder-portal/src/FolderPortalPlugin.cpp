@@ -1,8 +1,9 @@
 #include "FolderPortalPlugin.h"
 
 #include "../../shared/SampleFsHelpers.h"
+#include "core/CommandDispatcher.h"
 #include "core/Diagnostics.h"
-#include "extensions/FenceExtensionRegistry.h"
+#include "extensions/SpaceExtensionRegistry.h"
 #include "extensions/MenuContributionRegistry.h"
 #include "extensions/PluginSettingsRegistry.h"
 #include "extensions/SettingsSchema.h"
@@ -14,6 +15,7 @@
 #include <system_error>
 
 #ifdef _WIN32
+#include <windows.h>
 #include <shellapi.h>
 #endif
 
@@ -25,10 +27,10 @@ PluginManifest FolderPortalPlugin::GetManifest() const
     m.id = L"community.folder_portal";
     m.displayName = L"Folder Portal";
     m.version = L"1.2.2";
-    m.description = L"Fence content provider that mirrors an existing source folder with health-aware state updates.";
-    m.minHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
-    m.maxHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
-    m.capabilities = {L"fence_content_provider", L"commands", L"menu_contributions", L"tray_contributions", L"settings_pages"};
+    m.description = L"Space content provider that mirrors an existing source folder with health-aware state updates.";
+    m.minHostApiVersion = SimpleSpacesVersion::kPluginApiVersion;
+    m.maxHostApiVersion = SimpleSpacesVersion::kPluginApiVersion;
+    m.capabilities = {L"space_content_provider", L"commands", L"menu_contributions", L"tray_contributions", L"settings_pages"};
     return m;
 }
 
@@ -36,26 +38,26 @@ bool FolderPortalPlugin::Initialize(const PluginContext& context)
 {
     m_context = context;
 
-    if (m_context.fenceExtensionRegistry)
+    if (m_context.spaceExtensionRegistry)
     {
-        FenceContentProviderDescriptor provider;
+        SpaceContentProviderDescriptor provider;
         provider.providerId = L"community.folder_portal";
         provider.contentType = L"folder_portal";
         provider.displayName = L"Folder Portal";
         provider.isCoreDefault = false;
 
-        FenceContentProviderCallbacks callbacks;
-        callbacks.enumerateItems = [this](const FenceMetadata& fence) {
-            return EnumeratePortalItems(fence);
+        SpaceContentProviderCallbacks callbacks;
+        callbacks.enumerateItems = [this](const SpaceMetadata& space) {
+            return EnumeratePortalItems(space);
         };
-        callbacks.handleDrop = [this](const FenceMetadata& fence, const std::vector<std::wstring>& paths) {
-            return HandlePortalDrop(fence, paths);
+        callbacks.handleDrop = [this](const SpaceMetadata& space, const std::vector<std::wstring>& paths) {
+            return HandlePortalDrop(space, paths);
         };
-        callbacks.deleteItem = [this](const FenceMetadata& fence, const FenceItem& item) {
-            return HandlePortalDelete(fence, item);
+        callbacks.deleteItem = [this](const SpaceMetadata& space, const SpaceItem& item) {
+            return HandlePortalDelete(space, item);
         };
 
-        m_context.fenceExtensionRegistry->RegisterContentProvider(provider, callbacks);
+        m_context.spaceExtensionRegistry->RegisterContentProvider(provider, callbacks);
     }
 
     RegisterSettings();
@@ -115,9 +117,9 @@ void FolderPortalPlugin::Notify(const std::wstring& message) const
     m_context.diagnostics->Info(L"[FolderPortal][Notification] " + message);
 }
 
-void FolderPortalPlugin::RefreshFenceWithThrottle(const std::wstring& fenceId) const
+void FolderPortalPlugin::RefreshSpaceWithThrottle(const std::wstring& spaceId) const
 {
-    if (!m_context.appCommands || fenceId.empty())
+    if (!m_context.appCommands || spaceId.empty())
     {
         return;
     }
@@ -129,8 +131,8 @@ void FolderPortalPlugin::RefreshFenceWithThrottle(const std::wstring& fenceId) c
     }
 
     const auto now = std::chrono::steady_clock::now();
-    const auto it = m_lastRefreshAtByFence.find(fenceId);
-    if (it != m_lastRefreshAtByFence.end() && (now - it->second) < std::chrono::seconds(seconds))
+    const auto it = m_lastRefreshAtBySpace.find(spaceId);
+    if (it != m_lastRefreshAtBySpace.end() && (now - it->second) < std::chrono::seconds(seconds))
     {
         if (m_context.diagnostics)
         {
@@ -139,8 +141,8 @@ void FolderPortalPlugin::RefreshFenceWithThrottle(const std::wstring& fenceId) c
         return;
     }
 
-    m_lastRefreshAtByFence[fenceId] = now;
-    m_context.appCommands->RefreshFence(fenceId);
+    m_lastRefreshAtBySpace[spaceId] = now;
+    m_context.appCommands->RefreshSpace(spaceId);
 }
 
 void FolderPortalPlugin::RegisterSettings() const
@@ -161,7 +163,7 @@ void FolderPortalPlugin::RegisterSettings() const
     general.fields.push_back(SettingsFieldDescriptor{L"portal.general.default_mode", L"Default portal mode", L"Select how portal drag and drop is handled.", SettingsFieldType::Enum, L"read_only", {{L"read_only", L"Read-only"}, {L"copy_in", L"Copy into source"}, {L"move_in", L"Move into source"}}, 20});
     general.fields.push_back(SettingsFieldDescriptor{L"portal.general.allow_open", L"Allow open source", L"Allow opening portal source folder from command surfaces.", SettingsFieldType::Bool, L"true", {}, 25});
     general.fields.push_back(SettingsFieldDescriptor{L"portal.general.allow_rename", L"Allow rename", L"Allow rename operations for portal items where host supports it.", SettingsFieldType::Bool, L"false", {}, 28});
-    general.fields.push_back(SettingsFieldDescriptor{L"portal.general.allow_delete", L"Allow delete", L"Allow deleting source items from portal fences.", SettingsFieldType::Bool, L"false", {}, 30});
+    general.fields.push_back(SettingsFieldDescriptor{L"portal.general.allow_delete", L"Allow delete", L"Allow deleting source items from portal spaces.", SettingsFieldType::Bool, L"false", {}, 30});
     general.fields.push_back(SettingsFieldDescriptor{L"portal.general.show_hidden", L"Show hidden files", L"Include hidden files in portal enumeration.", SettingsFieldType::Bool, L"false", {}, 35});
     general.fields.push_back(SettingsFieldDescriptor{L"portal.general.show_system", L"Show system files", L"Include system files in portal enumeration where detectable.", SettingsFieldType::Bool, L"false", {}, 36});
     general.fields.push_back(SettingsFieldDescriptor{L"portal.general.new_portal_default_source", L"New portal default source", L"Optional default path for portal.new command.", SettingsFieldType::String, L"", {}, 40});
@@ -194,7 +196,7 @@ void FolderPortalPlugin::RegisterSettings() const
     safety.fields.push_back(SettingsFieldDescriptor{L"portal.safety.read_only_network_default", L"Read-only network default", L"Force read-only behavior for network paths by default.", SettingsFieldType::Bool, L"true", {}, 5});
     safety.fields.push_back(SettingsFieldDescriptor{L"portal.safety.warn_destructive", L"Warn destructive actions", L"Warn before destructive source actions where supported.", SettingsFieldType::Bool, L"true", {}, 7});
     safety.fields.push_back(SettingsFieldDescriptor{L"portal.safety.block_drop_readonly", L"Block drops when read-only", L"Block drop operations when in read-only mode.", SettingsFieldType::Bool, L"true", {}, 8});
-    safety.fields.push_back(SettingsFieldDescriptor{L"portal.safety.keep_visible_when_missing", L"Keep visible when source missing", L"When source folder is missing, keep the fence and mark it disconnected.", SettingsFieldType::Bool, L"true", {}, 10});
+    safety.fields.push_back(SettingsFieldDescriptor{L"portal.safety.keep_visible_when_missing", L"Keep visible when source missing", L"When source folder is missing, keep the space and mark it disconnected.", SettingsFieldType::Bool, L"true", {}, 10});
     m_context.settingsRegistry->RegisterPage(std::move(safety));
 
     PluginSettingsPage display;
@@ -221,7 +223,7 @@ void FolderPortalPlugin::RegisterMenus() const
     m_context.menuRegistry->Register(MenuContribution{MenuSurface::Tray, L"Pause Portal Updates", L"portal.pause_updates_toggle", 140, false});
     m_context.menuRegistry->Register(MenuContribution{MenuSurface::Tray, L"Convert Portal to Static", L"portal.convert_to_static", 150, false});
 
-    m_context.menuRegistry->Register(MenuContribution{MenuSurface::FenceContext, L"Open Portal Source Folder", L"portal.open_source", 230, true});
+    m_context.menuRegistry->Register(MenuContribution{MenuSurface::SpaceContext, L"Open Portal Source Folder", L"portal.open_source", 230, true});
 }
 
 void FolderPortalPlugin::RegisterCommands() const
@@ -239,9 +241,9 @@ void FolderPortalPlugin::RegisterCommands() const
     m_context.commandDispatcher->RegisterCommand(L"portal.convert_to_static", [this](const CommandContext& command) { HandleConvertToStatic(command); });
 }
 
-std::vector<FenceItem> FolderPortalPlugin::EnumeratePortalItems(const FenceMetadata& fence) const
+std::vector<SpaceItem> FolderPortalPlugin::EnumeratePortalItems(const SpaceMetadata& space) const
 {
-    std::vector<FenceItem> items;
+    std::vector<SpaceItem> items;
     if (!m_context.settingsRegistry || !m_context.appCommands)
     {
         return items;
@@ -252,11 +254,11 @@ std::vector<FenceItem> FolderPortalPlugin::EnumeratePortalItems(const FenceMetad
     const bool showHiddenLegacy = m_context.settingsRegistry->GetValue(L"portal.watch.show_hidden", L"false") == L"true";
     const bool showHidden = showHiddenGeneral || showHiddenLegacy;
 
-    fs::path source(fence.contentSource);
+    fs::path source(space.contentSource);
     std::error_code ec;
     if (source.empty() || !fs::exists(source, ec) || !fs::is_directory(source, ec))
     {
-        m_context.appCommands->UpdateFenceContentState(fence.id, L"disconnected", L"Portal source is unavailable.");
+        m_context.appCommands->UpdateSpaceContentState(space.id, L"disconnected", L"Portal source is unavailable.");
         return items;
     }
 
@@ -278,7 +280,7 @@ std::vector<FenceItem> FolderPortalPlugin::EnumeratePortalItems(const FenceMetad
                 }
             }
 
-            FenceItem item;
+            SpaceItem item;
             item.name = entry.path().filename().wstring();
             item.fullPath = entry.path().wstring();
             item.originalPath = entry.path().wstring();
@@ -304,7 +306,7 @@ std::vector<FenceItem> FolderPortalPlugin::EnumeratePortalItems(const FenceMetad
                 }
             }
 
-            FenceItem item;
+            SpaceItem item;
             item.name = entry.path().filename().wstring();
             item.fullPath = entry.path().wstring();
             item.originalPath = entry.path().wstring();
@@ -313,11 +315,11 @@ std::vector<FenceItem> FolderPortalPlugin::EnumeratePortalItems(const FenceMetad
         }
     }
 
-    m_context.appCommands->UpdateFenceContentState(fence.id, L"ready", L"");
+    m_context.appCommands->UpdateSpaceContentState(space.id, L"ready", L"");
     return items;
 }
 
-bool FolderPortalPlugin::HandlePortalDrop(const FenceMetadata& fence, const std::vector<std::wstring>& paths) const
+bool FolderPortalPlugin::HandlePortalDrop(const SpaceMetadata& space, const std::vector<std::wstring>& paths) const
 {
     if (!m_context.settingsRegistry)
     {
@@ -329,7 +331,7 @@ bool FolderPortalPlugin::HandlePortalDrop(const FenceMetadata& fence, const std:
     const bool readOnlyNetworkDefault = m_context.settingsRegistry->GetValue(L"portal.safety.read_only_network_default", L"true") == L"true";
     if (readOnlyNetworkDefault)
     {
-        const fs::path sourceRoot(fence.contentSource);
+        const fs::path sourceRoot(space.contentSource);
         const std::wstring native = sourceRoot.native();
         if (native.rfind(L"\\\\", 0) == 0)
         {
@@ -347,7 +349,7 @@ bool FolderPortalPlugin::HandlePortalDrop(const FenceMetadata& fence, const std:
     }
 
     std::error_code ec;
-    const fs::path sourceRoot(fence.contentSource);
+    const fs::path sourceRoot(space.contentSource);
     if (sourceRoot.empty() || !fs::exists(sourceRoot, ec) || !fs::is_directory(sourceRoot, ec))
     {
         return false;
@@ -398,13 +400,13 @@ bool FolderPortalPlugin::HandlePortalDrop(const FenceMetadata& fence, const std:
 
     if (movedAny && m_context.appCommands)
     {
-        m_context.appCommands->UpdateFenceContentState(fence.id, L"ready", L"");
+        m_context.appCommands->UpdateSpaceContentState(space.id, L"ready", L"");
     }
 
     return movedAny;
 }
 
-bool FolderPortalPlugin::HandlePortalDelete(const FenceMetadata& fence, const FenceItem& item) const
+bool FolderPortalPlugin::HandlePortalDelete(const SpaceMetadata& space, const SpaceItem& item) const
 {
     if (!m_context.settingsRegistry)
     {
@@ -434,7 +436,7 @@ bool FolderPortalPlugin::HandlePortalDelete(const FenceMetadata& fence, const Fe
 
     if (m_context.appCommands)
     {
-        m_context.appCommands->UpdateFenceContentState(fence.id, L"ready", L"");
+        m_context.appCommands->UpdateSpaceContentState(space.id, L"ready", L"");
     }
 
     return true;
@@ -447,7 +449,7 @@ void FolderPortalPlugin::HandleNewPortal(const CommandContext&) const
         return;
     }
 
-    FenceCreateRequest request;
+    SpaceCreateRequest request;
     request.title = L"Folder Portal";
     request.contentType = L"folder_portal";
     request.contentPluginId = L"community.folder_portal";
@@ -457,19 +459,19 @@ void FolderPortalPlugin::HandleNewPortal(const CommandContext&) const
         request.contentSource = m_context.settingsRegistry->GetValue(L"portal.general.new_portal_default_source", L"");
     }
 
-    const std::wstring createdFenceId = m_context.appCommands->CreateFenceNearCursor(request);
-    if (createdFenceId.empty())
+    const std::wstring createdSpaceId = m_context.appCommands->CreateSpaceNearCursor(request);
+    if (createdSpaceId.empty())
     {
         return;
     }
 
     if (request.contentSource.empty())
     {
-        m_context.appCommands->UpdateFenceContentState(createdFenceId, L"needs_source", L"Set a source path from host portal setup flow.");
+        m_context.appCommands->UpdateSpaceContentState(createdSpaceId, L"needs_source", L"Set a source path from host portal setup flow.");
     }
     else
     {
-        m_context.appCommands->UpdateFenceContentSource(createdFenceId, request.contentSource);
+        m_context.appCommands->UpdateSpaceContentSource(createdSpaceId, request.contentSource);
     }
 }
 
@@ -499,16 +501,16 @@ void FolderPortalPlugin::HandleReconnectAll(const CommandContext&) const
         m_context.diagnostics->Info(L"FolderPortal: reconnect_all requested with retry_interval_seconds=" + std::to_wstring(retryIntervalSeconds));
     }
 
-    const auto fenceIds = m_context.appCommands->GetAllFenceIds();
+    const auto spaceIds = m_context.appCommands->GetAllSpaceIds();
     bool any = false;
-    for (const auto& fenceId : fenceIds)
+    for (const auto& spaceId : spaceIds)
     {
-        const FenceMetadata fence = m_context.appCommands->GetFenceMetadata(fenceId);
-        if (fence.contentType == L"folder_portal")
+        const SpaceMetadata space = m_context.appCommands->GetSpaceMetadata(spaceId);
+        if (space.contentType == L"folder_portal")
         {
-            m_context.appCommands->UpdateFenceContentState(fence.id, L"connecting", L"Reconnect requested.");
-            RefreshFenceWithThrottle(fence.id);
-            UpdatePortalHealth(fence);
+            m_context.appCommands->UpdateSpaceContentState(space.id, L"connecting", L"Reconnect requested.");
+            RefreshSpaceWithThrottle(space.id);
+            UpdatePortalHealth(space);
             any = true;
         }
     }
@@ -526,15 +528,15 @@ void FolderPortalPlugin::HandleRefreshAll(const CommandContext&) const
         return;
     }
 
-    const auto fenceIds = m_context.appCommands->GetAllFenceIds();
+    const auto spaceIds = m_context.appCommands->GetAllSpaceIds();
     bool any = false;
-    for (const auto& fenceId : fenceIds)
+    for (const auto& spaceId : spaceIds)
     {
-        const FenceMetadata fence = m_context.appCommands->GetFenceMetadata(fenceId);
-        if (fence.contentType == L"folder_portal")
+        const SpaceMetadata space = m_context.appCommands->GetSpaceMetadata(spaceId);
+        if (space.contentType == L"folder_portal")
         {
-            RefreshFenceWithThrottle(fence.id);
-            UpdatePortalHealth(fence);
+            RefreshSpaceWithThrottle(space.id);
+            UpdatePortalHealth(space);
             any = true;
         }
     }
@@ -566,10 +568,10 @@ void FolderPortalPlugin::HandleOpenPortalSource(const CommandContext& command) c
         return;
     }
 
-    std::wstring source = command.fence.contentSource;
+    std::wstring source = command.space.contentSource;
     if (source.empty() && m_context.appCommands)
     {
-        source = m_context.appCommands->GetCurrentCommandContext().fence.contentSource;
+        source = m_context.appCommands->GetCurrentCommandContext().space.contentSource;
     }
 
     if (!source.empty())
@@ -589,33 +591,33 @@ void FolderPortalPlugin::HandleConvertToStatic(const CommandContext& command) co
         return;
     }
 
-    std::wstring fenceId = command.fence.id;
-    if (fenceId.empty())
+    std::wstring spaceId = command.space.id;
+    if (spaceId.empty())
     {
-        fenceId = m_context.appCommands->GetCurrentCommandContext().fence.id;
+        spaceId = m_context.appCommands->GetCurrentCommandContext().space.id;
     }
 
-    if (fenceId.empty())
+    if (spaceId.empty())
     {
         if (m_context.diagnostics)
         {
-            m_context.diagnostics->Warn(L"FolderPortal: convert_to_static skipped because no fence context was available");
+            m_context.diagnostics->Warn(L"FolderPortal: convert_to_static skipped because no space context was available");
         }
         return;
     }
 
     // Host contract does not yet expose a content-type mutation API, so this command
     // marks state and logs intent while preserving current source-linked behavior.
-    m_context.appCommands->UpdateFenceContentState(fenceId, L"ready", L"Convert-to-static requested (host content conversion API pending).");
-    RefreshFenceWithThrottle(fenceId);
+    m_context.appCommands->UpdateSpaceContentState(spaceId, L"ready", L"Convert-to-static requested (host content conversion API pending).");
+    RefreshSpaceWithThrottle(spaceId);
     if (m_context.diagnostics)
     {
-        m_context.diagnostics->Info(L"FolderPortal: convert_to_static requested for fence " + fenceId);
+        m_context.diagnostics->Info(L"FolderPortal: convert_to_static requested for space " + spaceId);
     }
     Notify(L"Convert portal to static requested.");
 }
 
-void FolderPortalPlugin::UpdatePortalHealth(const FenceMetadata& fence) const
+void FolderPortalPlugin::UpdatePortalHealth(const SpaceMetadata& space) const
 {
     if (!m_context.appCommands)
     {
@@ -623,20 +625,20 @@ void FolderPortalPlugin::UpdatePortalHealth(const FenceMetadata& fence) const
     }
 
     std::error_code ec;
-    const fs::path source(fence.contentSource);
+    const fs::path source(space.contentSource);
     if (source.empty())
     {
-        m_context.appCommands->UpdateFenceContentState(fence.id, L"needs_source", L"Portal source path is not set.");
+        m_context.appCommands->UpdateSpaceContentState(space.id, L"needs_source", L"Portal source path is not set.");
         return;
     }
 
     if (!fs::exists(source, ec) || !fs::is_directory(source, ec))
     {
-        m_context.appCommands->UpdateFenceContentState(fence.id, L"disconnected", L"Portal source is unavailable.");
+        m_context.appCommands->UpdateSpaceContentState(space.id, L"disconnected", L"Portal source is unavailable.");
         return;
     }
 
-    m_context.appCommands->UpdateFenceContentState(fence.id, L"ready", L"");
+    m_context.appCommands->UpdateSpaceContentState(space.id, L"ready", L"");
 }
 
 

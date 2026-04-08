@@ -1,6 +1,6 @@
 # Productivity Actions
 
-Adds practical multi-step commands for daily fence workflows.
+Adds practical multi-step commands for daily Space workflows.
 
 ## Plugin Snapshot
 

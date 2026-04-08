@@ -1,19 +1,19 @@
-# Network Drive Fence
+# Space Organizer
 
-A fence content provider that maps a UNC path or mapped network drive as a browseable folder fence.
+Adds context-aware sorting and cleanup commands that move and organize real Space files.
 
 ## Plugin Snapshot
 
-- Folder: `network-drive-fence`
-- Plugin ID: `community.network_drive_fence`
+- Folder: `Space-organizer`
+- Plugin ID: `community.space_organizer`
 - Version: `1.2.2`
-- Capabilities: `fence_content_provider`, `settings_pages`
+- Capabilities: `commands`, `menu_contributions`, `settings_pages`
 
 ## Files
 
 - `plugin.json`
-- `src/NetworkDriveFencePlugin.h`
-- `src/NetworkDriveFencePlugin.cpp`
+- `src/SpaceOrganizerPlugin.h`
+- `src/SpaceOrganizerPlugin.cpp`
 
 ## Host Integration
 

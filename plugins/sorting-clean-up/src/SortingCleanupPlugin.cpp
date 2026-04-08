@@ -1,5 +1,7 @@
 #include "SortingCleanupPlugin.h"
 
+#include "core/CommandDispatcher.h"
+#include "core/Diagnostics.h"
 #include "extensions/MenuContributionRegistry.h"
 #include "extensions/PluginSettingsRegistry.h"
 #include "extensions/SettingsSchema.h"
@@ -16,12 +18,12 @@ namespace fs = std::filesystem;
 PluginManifest SortingCleanupPlugin::GetManifest() const
 {
     PluginManifest m;
-    m.id = L"community.fence_sort_cleanup";
-    m.displayName = L"Fence Sort and Clean Up";
+    m.id = L"community.space_sort_cleanup";
+    m.displayName = L"Space Sort and Clean Up";
     m.version = L"1.1.2";
-    m.description = L"Sorts and arranges fence items with optional automation and cleanup tools.";
-    m.minHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
-    m.maxHostApiVersion = SimpleFencesVersion::kPluginApiVersion;
+    m.description = L"Sorts and arranges space items with optional automation and cleanup tools.";
+    m.minHostApiVersion = SimpleSpacesVersion::kPluginApiVersion;
+    m.maxHostApiVersion = SimpleSpacesVersion::kPluginApiVersion;
     m.capabilities = {L"commands", L"tray_contributions", L"settings_pages", L"desktop_context"};
     return m;
 }
@@ -54,7 +56,7 @@ void SortingCleanupPlugin::Shutdown()
 void SortingCleanupPlugin::RegisterSettings() const
 {
     PluginSettingsPage page;
-    page.pluginId = L"community.fence_sort_cleanup";
+    page.pluginId = L"community.space_sort_cleanup";
     page.pageId = L"sort.cleanup";
     page.title = L"Sort and Clean Up";
     page.order = 65;
@@ -78,7 +80,7 @@ void SortingCleanupPlugin::RegisterSettings() const
     page.fields.push_back(SettingsFieldDescriptor{L"sort.secondary_key", L"Secondary sort key", L"Tiebreaker sort key applied when two items compare equal on the primary key.", SettingsFieldType::Enum, L"name", {{L"name", L"Name"}, {L"modified", L"Modified"}, {L"size", L"Size"}, {L"none", L"None"}}, 120});
     page.fields.push_back(SettingsFieldDescriptor{L"sort.shortcuts_last", L"Sort shortcuts last", L"Place .lnk shortcut files after regular files regardless of the primary sort key.", SettingsFieldType::Bool, L"false", {}, 130});
     page.fields.push_back(SettingsFieldDescriptor{L"sort.natural_number_order", L"Natural number sort", L"Sort filenames containing numbers in natural order (e.g. file2 before file10).", SettingsFieldType::Bool, L"true", {}, 140});
-    page.fields.push_back(SettingsFieldDescriptor{L"auto.scope", L"Autosort scope", L"Choose whether autosort triggers apply to all fences or only the fence where an item was added.", SettingsFieldType::Enum, L"active_fence", {{L"active_fence", L"Active fence only"}, {L"all_fences", L"All fences"}}, 150});
+    page.fields.push_back(SettingsFieldDescriptor{L"auto.scope", L"Autosort scope", L"Choose whether autosort triggers apply to all spaces or only the space where an item was added.", SettingsFieldType::Enum, L"active_space", {{L"active_space", L"Active space only"}, {L"all_spaces", L"All spaces"}}, 150});
     page.fields.push_back(SettingsFieldDescriptor{L"layout.confirm_cleanup", L"Confirm before cleanup", L"Ask for confirmation before the clean-up operation removes empty subfolders.", SettingsFieldType::Bool, L"true", {}, 160});
 
     m_context.settingsRegistry->RegisterPage(std::move(page));
@@ -91,11 +93,11 @@ void SortingCleanupPlugin::RegisterMenus() const
         return;
     }
 
-    m_context.menuRegistry->Register(MenuContribution{MenuSurface::FenceContext, L"Sort Current by Name", L"sort.current.name", 810, false});
-    m_context.menuRegistry->Register(MenuContribution{MenuSurface::FenceContext, L"Sort Current by Type", L"sort.current.type", 820, false});
-    m_context.menuRegistry->Register(MenuContribution{MenuSurface::FenceContext, L"Sort Current by Modified", L"sort.current.modified", 830, false});
-    m_context.menuRegistry->Register(MenuContribution{MenuSurface::FenceContext, L"Clean Up Current", L"cleanup.current", 840, true});
-    m_context.menuRegistry->Register(MenuContribution{MenuSurface::FenceContext, L"Align Current to Grid", L"align.current.grid", 850, false});
+    m_context.menuRegistry->Register(MenuContribution{MenuSurface::SpaceContext, L"Sort Current by Name", L"sort.current.name", 810, false});
+    m_context.menuRegistry->Register(MenuContribution{MenuSurface::SpaceContext, L"Sort Current by Type", L"sort.current.type", 820, false});
+    m_context.menuRegistry->Register(MenuContribution{MenuSurface::SpaceContext, L"Sort Current by Modified", L"sort.current.modified", 830, false});
+    m_context.menuRegistry->Register(MenuContribution{MenuSurface::SpaceContext, L"Clean Up Current", L"cleanup.current", 840, true});
+    m_context.menuRegistry->Register(MenuContribution{MenuSurface::SpaceContext, L"Align Current to Grid", L"align.current.grid", 850, false});
     m_context.menuRegistry->Register(MenuContribution{MenuSurface::Tray, L"Toggle Autosort", L"autosort.toggle", 860, false});
 }
 
@@ -116,16 +118,16 @@ void SortingCleanupPlugin::HandleSortByName(const CommandContext& command) const
         return;
     }
 
-    const FenceMetadata fence = ResolveFence(command);
-    if (fence.id.empty() || fence.backingFolderPath.empty())
+    const SpaceMetadata space = ResolveSpace(command);
+    if (space.id.empty() || space.backingFolderPath.empty())
     {
-        LogWarn(L"sort.current.name skipped: no fence context");
+        LogWarn(L"sort.current.name skipped: no space context");
         return;
     }
 
     std::error_code ec;
     std::vector<fs::path> files;
-    for (const auto& entry : fs::directory_iterator(fence.backingFolderPath, fs::directory_options::skip_permission_denied, ec))
+    for (const auto& entry : fs::directory_iterator(space.backingFolderPath, fs::directory_options::skip_permission_denied, ec))
     {
         if (ec)
         {
@@ -154,7 +156,7 @@ void SortingCleanupPlugin::HandleSortByName(const CommandContext& command) const
         return descending ? av > bv : av < bv;
     });
 
-    ApplySortPlan(fence, files);
+    ApplySortPlan(space, files);
     SetSetting(L"sort.mode.default", L"name");
     LogInfo(L"sort.current.name applied to " + std::to_wstring(files.size()) + L" files");
 }
@@ -166,16 +168,16 @@ void SortingCleanupPlugin::HandleSortByType(const CommandContext& command) const
         return;
     }
 
-    const FenceMetadata fence = ResolveFence(command);
-    if (fence.id.empty() || fence.backingFolderPath.empty())
+    const SpaceMetadata space = ResolveSpace(command);
+    if (space.id.empty() || space.backingFolderPath.empty())
     {
-        LogWarn(L"sort.current.type skipped: no fence context");
+        LogWarn(L"sort.current.type skipped: no space context");
         return;
     }
 
     std::error_code ec;
     std::vector<fs::path> files;
-    for (const auto& entry : fs::directory_iterator(fence.backingFolderPath, fs::directory_options::skip_permission_denied, ec))
+    for (const auto& entry : fs::directory_iterator(space.backingFolderPath, fs::directory_options::skip_permission_denied, ec))
     {
         if (ec)
         {
@@ -203,7 +205,7 @@ void SortingCleanupPlugin::HandleSortByType(const CommandContext& command) const
         return descending ? ae > be : ae < be;
     });
 
-    ApplySortPlan(fence, files);
+    ApplySortPlan(space, files);
     SetSetting(L"sort.mode.default", L"type");
     LogInfo(L"sort.current.type applied to " + std::to_wstring(files.size()) + L" files");
 }
@@ -215,16 +217,16 @@ void SortingCleanupPlugin::HandleSortByModified(const CommandContext& command) c
         return;
     }
 
-    const FenceMetadata fence = ResolveFence(command);
-    if (fence.id.empty() || fence.backingFolderPath.empty())
+    const SpaceMetadata space = ResolveSpace(command);
+    if (space.id.empty() || space.backingFolderPath.empty())
     {
-        LogWarn(L"sort.current.modified skipped: no fence context");
+        LogWarn(L"sort.current.modified skipped: no space context");
         return;
     }
 
     std::error_code ec;
     std::vector<fs::path> files;
-    for (const auto& entry : fs::directory_iterator(fence.backingFolderPath, fs::directory_options::skip_permission_denied, ec))
+    for (const auto& entry : fs::directory_iterator(space.backingFolderPath, fs::directory_options::skip_permission_denied, ec))
     {
         if (ec)
         {
@@ -252,7 +254,7 @@ void SortingCleanupPlugin::HandleSortByModified(const CommandContext& command) c
         return descending ? at > bt : at < bt;
     });
 
-    ApplySortPlan(fence, files);
+    ApplySortPlan(space, files);
     SetSetting(L"sort.mode.default", L"modified");
     LogInfo(L"sort.current.modified applied to " + std::to_wstring(files.size()) + L" files");
 }
@@ -264,16 +266,16 @@ void SortingCleanupPlugin::HandleCleanupCurrent(const CommandContext& command) c
         return;
     }
 
-    const FenceMetadata fence = ResolveFence(command);
-    if (fence.id.empty() || fence.backingFolderPath.empty())
+    const SpaceMetadata space = ResolveSpace(command);
+    if (space.id.empty() || space.backingFolderPath.empty())
     {
-        LogWarn(L"cleanup.current skipped: no fence context");
+        LogWarn(L"cleanup.current skipped: no space context");
         return;
     }
 
     size_t removed = 0;
     std::error_code ec;
-    for (const auto& entry : fs::directory_iterator(fence.backingFolderPath, fs::directory_options::skip_permission_denied, ec))
+    for (const auto& entry : fs::directory_iterator(space.backingFolderPath, fs::directory_options::skip_permission_denied, ec))
     {
         if (ec)
         {
@@ -293,7 +295,7 @@ void SortingCleanupPlugin::HandleCleanupCurrent(const CommandContext& command) c
         ec.clear();
     }
 
-    RefreshFenceWithThrottle(fence.id);
+    RefreshSpaceWithThrottle(space.id);
     LogInfo(L"cleanup.current removed " + std::to_wstring(removed) + L" empty folder(s)");
     Notify(L"Cleanup current completed.");
 }
@@ -305,10 +307,10 @@ void SortingCleanupPlugin::HandleAlignGrid(const CommandContext& command) const
         return;
     }
 
-    const FenceMetadata fence = ResolveFence(command);
-    if (fence.id.empty())
+    const SpaceMetadata space = ResolveSpace(command);
+    if (space.id.empty())
     {
-        LogWarn(L"align.current.grid skipped: no fence context");
+        LogWarn(L"align.current.grid skipped: no space context");
         return;
     }
 
@@ -320,7 +322,7 @@ void SortingCleanupPlugin::HandleAlignGrid(const CommandContext& command) const
         return;
     }
 
-    LogInfo(L"align.current.grid requested for fence=" + fence.id + L" spacing=" + std::to_wstring(spacing) + L"px");
+    LogInfo(L"align.current.grid requested for space=" + space.id + L" spacing=" + std::to_wstring(spacing) + L"px");
 }
 
 void SortingCleanupPlugin::HandleAutoSortToggle(const CommandContext&) const
@@ -336,20 +338,20 @@ void SortingCleanupPlugin::HandleAutoSortToggle(const CommandContext&) const
     Notify(m_autoSortEnabled ? L"Autosort enabled." : L"Autosort disabled.");
 }
 
-FenceMetadata SortingCleanupPlugin::ResolveFence(const CommandContext& command) const
+SpaceMetadata SortingCleanupPlugin::ResolveSpace(const CommandContext& command) const
 {
-    if (!command.fence.id.empty())
+    if (!command.space.id.empty())
     {
-        return command.fence;
+        return command.space;
     }
 
     const CommandContext current = m_context.appCommands->GetCurrentCommandContext();
-    if (!current.fence.id.empty())
+    if (!current.space.id.empty())
     {
-        return current.fence;
+        return current.space;
     }
 
-    const FenceMetadata active = m_context.appCommands->GetActiveFenceMetadata();
+    const SpaceMetadata active = m_context.appCommands->GetActiveSpaceMetadata();
     if (!active.id.empty())
     {
         return active;
@@ -403,9 +405,9 @@ void SortingCleanupPlugin::Notify(const std::wstring& message) const
     m_context.diagnostics->Info(L"[SortCleanup][Notification] " + message);
 }
 
-void SortingCleanupPlugin::RefreshFenceWithThrottle(const std::wstring& fenceId) const
+void SortingCleanupPlugin::RefreshSpaceWithThrottle(const std::wstring& spaceId) const
 {
-    if (!m_context.appCommands || fenceId.empty())
+    if (!m_context.appCommands || spaceId.empty())
     {
         return;
     }
@@ -419,7 +421,7 @@ void SortingCleanupPlugin::RefreshFenceWithThrottle(const std::wstring& fenceId)
     }
 
     m_lastRefreshAt = now;
-    m_context.appCommands->RefreshFence(fenceId);
+    m_context.appCommands->RefreshSpace(spaceId);
 }
 
 int SortingCleanupPlugin::GetInt(const std::wstring& key, int fallback) const
@@ -486,7 +488,7 @@ fs::path SortingCleanupPlugin::BuildUniquePath(const fs::path& target)
     return target;
 }
 
-void SortingCleanupPlugin::ApplySortPlan(const FenceMetadata& fence, const std::vector<fs::path>& files) const
+void SortingCleanupPlugin::ApplySortPlan(const SpaceMetadata& space, const std::vector<fs::path>& files) const
 {
     if (files.empty())
     {
@@ -543,7 +545,7 @@ void SortingCleanupPlugin::ApplySortPlan(const FenceMetadata& fence, const std::
     if (cleanupAfterSort)
     {
         size_t removed = 0;
-        for (const auto& entry : fs::directory_iterator(fence.backingFolderPath, fs::directory_options::skip_permission_denied, ec))
+        for (const auto& entry : fs::directory_iterator(space.backingFolderPath, fs::directory_options::skip_permission_denied, ec))
         {
             if (ec)
             {
@@ -568,7 +570,7 @@ void SortingCleanupPlugin::ApplySortPlan(const FenceMetadata& fence, const std::
         }
     }
 
-    RefreshFenceWithThrottle(fence.id);
+    RefreshSpaceWithThrottle(space.id);
     Notify(L"Sort operation completed.");
 }
 
